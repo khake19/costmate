@@ -48,7 +48,13 @@ export default class App {
         const height = Math.min(720, workAreaSize.height || 720);
 
         // Create the browser window.
-        App.mainWindow = new BrowserWindow({ width: width, height: height, show: false, webPreferences: {
+        App.mainWindow = new BrowserWindow({
+            width: width,
+            height: height,
+            show: false,
+            frame: false,
+            titleBarStyle: 'hidden',
+            webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
                 preload: join(__dirname, 'main.preload.js')
