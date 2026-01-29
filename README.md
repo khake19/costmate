@@ -2,9 +2,46 @@
 
 <a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+Costmate desktop application built with Nx and Electron.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v20+)
+- pnpm
+
+### Installation
+
+1. Enable postinstall scripts (required for Electron native dependencies):
+
+```sh
+pnpm config set enable-pre-post-scripts true
+```
+
+2. Install dependencies:
+
+```sh
+pnpm install
+```
+
+> **Note:** If `pnpm install` fails with `electron-builder: command not found`, install it explicitly:
+>
+> ```sh
+> pnpm add -D electron-builder
+> ```
+
+### Running the Application
+
+Run both the frontend and backend in separate terminals:
+
+```sh
+# Terminal 1 - Backend (Electron main process)
+pnpm nxe:serve:backend
+
+# Terminal 2 - Frontend (React UI)
+pnpm nxe:serve:frontend
+```
 
 ## Finish your CI setup
 

@@ -30,7 +30,7 @@
     "@nx/web": "21.6.10",
     "@playwright/test": "^1.36.0",
     "@swc-node/register": "~1.9.1",
-    "@swc/core": "~1.5.7",
+    "@swc/core": "~1.15.11",
     "@swc/helpers": "~0.5.11",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
@@ -40,6 +40,7 @@
     "@vitest/ui": "^3.0.0",
     "autoprefixer": "10.4.13",
     "electron": "^34.5.6",
+    "electron-builder": "^26.4.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "jest": "^30.0.2",
@@ -60,10 +61,6 @@
     "vitest": "^3.0.0",
     "webpack-node-externals": "^3.0.0"
   },
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
   "dependencies": {
     "react": "19.0.0",
     "react-dom": "19.0.0",
