@@ -49,21 +49,27 @@ export default function App() {
 
       {/* Summary Bar */}
       <div className="bg-gray-200 px-4 py-3 flex justify-between text-xs border-b">
-        <div className="text-center">
-          <div className="text-gray-500">Revenue/mo</div>
-          <div className="font-bold">₱91,728</div>
+        {/* Income - Left */}
+        <div className="flex gap-8">
+          <div>
+            <div className="text-gray-500">Revenue/mo</div>
+            <div className="font-bold text-lg">₱91,728</div>
+          </div>
+          <div>
+            <div className="text-gray-500">Profit/mo</div>
+            <div className="font-bold text-lg">₱57,397</div>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-500">Profit/mo</div>
-          <div className="font-bold">₱57,397</div>
-        </div>
-        <div className="text-center">
-          <div className="text-gray-500">OPEX/mo</div>
-          <div className="font-bold">₱56,700</div>
-        </div>
-        <div className="text-center">
-          <div className="text-gray-500">Net Profit</div>
-          <div className="font-bold text-green-600">₱697</div>
+        {/* Expenses & Result - Right */}
+        <div className="flex gap-8">
+          <div className="text-right">
+            <div className="text-gray-500">OPEX/mo</div>
+            <div className="font-bold text-lg">₱56,700</div>
+          </div>
+          <div className="text-right">
+            <div className="text-gray-500">Net Profit</div>
+            <div className="font-bold text-lg text-green-600">₱697</div>
+          </div>
         </div>
       </div>
 
@@ -71,7 +77,7 @@ export default function App() {
       <div className="p-4">
         {/* Search + Add */}
         <div className="flex gap-2 mb-4">
-          <div className="flex-1 h-8 bg-gray-200 flex items-center justify-center text-xs text-gray-500 px-2">
+          <div className="w-64 h-8 bg-gray-200 flex items-center text-xs text-gray-500 px-3">
             🔍 Search recipes...
           </div>
           <div className="bg-gray-800 text-white px-4 py-2 text-xs cursor-pointer">
