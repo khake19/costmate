@@ -1,7 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui';
+import { Button, cn } from '@costmate/ui';
 import { Settings, Minus, Square, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 declare global {
   interface Window {

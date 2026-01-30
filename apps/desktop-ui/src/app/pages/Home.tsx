@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Card } from '@/components/ui';
+import { Button, Input, Card } from '@costmate/ui';
 import { Plus, Search } from 'lucide-react';
 
 export default function Home() {

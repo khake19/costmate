@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Button, Input, Card } from '@/components/ui';
+import { Button, Input, Card, cn } from '@costmate/ui';
 import { Plus, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import IngredientForm from './IngredientForm';
 
 const categories = ['All', 'Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'];
@@ -116,7 +115,7 @@ export default function Ingredients() {
       {/* Side Panel */}
       <div
         className={cn(
-          'w-80 bg-muted border-l flex flex-col transition-all duration-200 ease-in-out',
+          'w-96 bg-muted border-l flex flex-col transition-all duration-200 ease-in-out',
           showPanel ? 'translate-x-0' : 'translate-x-full w-0 border-l-0'
         )}
       >

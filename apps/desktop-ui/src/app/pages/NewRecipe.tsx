@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Label, Card } from '@/components/ui';
+import { Button, Input, Label, Card } from '@costmate/ui';
 import { ArrowLeft, Plus } from 'lucide-react';
 
 export default function NewRecipe() {

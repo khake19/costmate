@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Label, Card } from '@/components/ui';
+import { Button, Input, Label, Card } from '@costmate/ui';
 import { X } from 'lucide-react';
 
 const categories = ['Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'];
