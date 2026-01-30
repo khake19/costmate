@@ -5,7 +5,8 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": [
-      "dom"
+      "dom",
+      "ES2022"
     ],
     "types": [
       "node",
@@ -14,8 +15,14 @@
       "vite/client"
     ],
     "rootDir": "src",
-    "module": "esnext",
-    "moduleResolution": "bundler"
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": [
     "out-tsc",

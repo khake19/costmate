@@ -13,23 +13,31 @@ Costmate desktop application built with Nx and Electron.
 
 ### Installation
 
-1. Enable postinstall scripts (required for Electron native dependencies):
-
-```sh
-pnpm config set enable-pre-post-scripts true
-```
-
-2. Install dependencies:
+Install dependencies:
 
 ```sh
 pnpm install
 ```
 
-> **Note:** If `pnpm install` fails with `electron-builder: command not found`, install it explicitly:
->
-> ```sh
-> pnpm add -D electron-builder
-> ```
+> **Note:** The `.npmrc` file includes `enable-pre-post-scripts=true` which allows postinstall scripts to run (required for Electron).
+
+### Troubleshooting
+
+**Electron failed to install correctly:**
+
+If you see this error, run the electron install script manually:
+
+```sh
+node node_modules/electron/install.js
+```
+
+**electron-builder: command not found:**
+
+Install it explicitly:
+
+```sh
+pnpm add -D electron-builder
+```
 
 ### Running the Application
 

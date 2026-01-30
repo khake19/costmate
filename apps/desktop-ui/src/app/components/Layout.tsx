@@ -1,4 +1,6 @@
 import { Outlet } from 'react-router-dom';
+import { Button } from '@/components/ui';
+import { Settings, Minus, Square, X } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -12,10 +14,10 @@ declare global {
 
 export default function Layout() {
   return (
-    <div className="h-screen bg-gray-50 font-mono text-sm flex flex-col overflow-hidden">
+    <div className="h-screen bg-background font-mono text-sm flex flex-col overflow-hidden">
       {/* Title Bar - Draggable */}
       <div
-        className="bg-gray-300 px-4 py-2 flex justify-between items-center"
+        className="bg-muted px-4 py-2 flex justify-between items-center border-b"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <span className="font-bold">Food Costing Calculator</span>
@@ -23,28 +25,34 @@ export default function Layout() {
           className="flex gap-2 items-center"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
-          <button className="w-6 h-6 bg-gray-400 hover:bg-gray-500 flex items-center justify-center cursor-pointer">
-            ⚙
-          </button>
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Settings className="h-4 w-4" />
+          </Button>
           <div className="flex gap-1">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
               onClick={() => window.electron?.windowMinimize()}
-              className="w-8 h-6 bg-gray-400 hover:bg-gray-500 flex items-center justify-center text-gray-700"
             >
-              ─
-            </button>
-            <button
+              <Minus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
               onClick={() => window.electron?.windowMaximize()}
-              className="w-8 h-6 bg-gray-400 hover:bg-gray-500 flex items-center justify-center text-gray-700"
             >
-              ☐
-            </button>
-            <button
+              <Square className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
               onClick={() => window.electron?.windowClose()}
-              className="w-8 h-6 bg-red-400 hover:bg-red-500 flex items-center justify-center text-white"
             >
-              ✕
-            </button>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
