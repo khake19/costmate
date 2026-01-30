@@ -34,7 +34,7 @@ export default function Home() {
       {/* Content */}
       <div className="p-4">
         {/* Search + Add */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex justify-between items-center mb-4">
           <div className="w-96 h-8 bg-gray-200 flex items-center text-xs text-gray-500 px-3">
             🔍 Search recipes...
           </div>

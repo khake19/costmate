@@ -6,18 +6,16 @@ export default function NewRecipe() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Page Header */}
-      <div className="bg-gray-200 px-4 py-2 flex justify-between items-center border-b">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-800 cursor-pointer"
-          >
-            ← Cancel
-          </button>
-          <span className="font-bold">New Recipe</span>
-        </div>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 bg-gray-300 text-gray-500 text-xs">
+      <div className="bg-gray-200 px-4 py-2 flex items-center border-b">
+        <button
+          onClick={() => navigate('/')}
+          className="text-gray-600 hover:text-gray-800 cursor-pointer w-20"
+        >
+          ← Cancel
+        </button>
+        <span className="font-bold flex-1 text-center">New Recipe</span>
+        <div className="w-20 flex justify-end">
+          <button className="bg-gray-800 text-white px-4 py-2 text-xs">
             Save
           </button>
         </div>
