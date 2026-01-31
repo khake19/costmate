@@ -28,10 +28,14 @@ export default [
                     ],
                     depConstraints: [
                         {
-                            sourceTag: "*",
-                            onlyDependOnLibsWithTags: [
-                                "*"
-                            ]
+                            // Apps can depend on any lib
+                            sourceTag: "scope:app",
+                            onlyDependOnLibsWithTags: ["scope:lib"]
+                        },
+                        {
+                            // Libs can only depend on other libs
+                            sourceTag: "scope:lib",
+                            onlyDependOnLibsWithTags: ["scope:lib"]
                         }
                     ]
                 }
