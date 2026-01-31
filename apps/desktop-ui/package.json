@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "@costmate/core": "workspace:*",
     "@costmate/ui": "workspace:*",
     "react-router-dom": "^7.13.0"
   }

@@ -1,37 +1,27 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+import {
+  CATEGORIES,
+  UNITS,
+  calculatePricePerUnit,
+  ingredientSchema,
+  type Category,
+  type IngredientFormData,
+  type Unit,
+} from "@costmate/core";
 import {
   Button,
+  Card,
   Input,
   Label,
-  Card,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@costmate/ui';
-import { X, Trash2 } from 'lucide-react';
-
-const categories = ['Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'] as const;
-const units = ['kg', 'g', 'L', 'ml', 'pc'] as const;
-
-const ingredientSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  category: z.enum(categories),
-  quantity: z.string().min(1, 'Quantity is required').refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0,
-    'Quantity must be a positive number'
-  ),
-  unit: z.enum(units),
-  price: z.string().min(1, 'Price is required').refine(
-    (val) => !isNaN(Number(val)) && Number(val) >= 0,
-    'Price must be a valid number'
-  ),
-});
-
-type IngredientFormData = z.infer<typeof ingredientSchema>;
+} from "@costmate/ui";
+import { Trash2, X } from "lucide-react";
 
 interface IngredientFormProps {
   ingredient?: IngredientFormData;
@@ -40,7 +30,12 @@ interface IngredientFormProps {
   onCancel: () => void;
 }
 
-export default function IngredientForm({ ingredient, onSave, onDelete, onCancel }: IngredientFormProps) {
+export default function IngredientForm({
+  ingredient,
+  onSave,
+  onDelete,
+  onCancel,
+}: IngredientFormProps) {
   const isEditing = !!ingredient;
 
   const {
@@ -52,46 +47,17 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
   } = useForm<IngredientFormData>({
     resolver: zodResolver(ingredientSchema),
     defaultValues: ingredient ?? {
-      name: '',
-      category: 'Meat',
-      quantity: '1',
-      unit: 'kg',
-      price: '',
+      name: "",
+      category: "Meat",
+      quantity: "1",
+      unit: "kg",
+      price: "",
     },
   });
 
-  const quantity = watch('quantity');
-  const unit = watch('unit');
-  const price = watch('price');
-
-  const calculatePricePerUnit = () => {
-    const qty = parseFloat(quantity) || 0;
-    const priceVal = parseFloat(price) || 0;
-    if (qty === 0 || priceVal === 0) return '--';
-
-    let baseUnit = 'g';
-    let multiplier = 1;
-
-    if (unit === 'kg') {
-      multiplier = 1000;
-      baseUnit = 'g';
-    } else if (unit === 'g') {
-      multiplier = 1;
-      baseUnit = 'g';
-    } else if (unit === 'L') {
-      multiplier = 1000;
-      baseUnit = 'ml';
-    } else if (unit === 'ml') {
-      multiplier = 1;
-      baseUnit = 'ml';
-    } else if (unit === 'pc') {
-      multiplier = 1;
-      baseUnit = 'pc';
-    }
-
-    const pricePerBase = priceVal / (qty * multiplier);
-    return `₱${pricePerBase.toFixed(3)}/${baseUnit}`;
-  };
+  const quantity = watch("quantity");
+  const unit = watch("unit");
+  const price = watch("price");
 
   const onSubmit = (data: IngredientFormData) => {
     onSave(data);
@@ -101,7 +67,9 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
     <>
       {/* Panel Header */}
       <div className="px-4 py-3 border-b flex justify-between items-center">
-        <span className="font-bold text-sm">{isEditing ? 'EDIT INGREDIENT' : 'ADD INGREDIENT'}</span>
+        <span className="font-bold text-sm">
+          {isEditing ? "EDIT INGREDIENT" : "ADD INGREDIENT"}
+        </span>
         <Button
           variant="ghost"
           size="icon"
@@ -119,12 +87,11 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
           <Label className="text-xs text-muted-foreground mb-1 block">
             Name
           </Label>
-          <Input
-            placeholder="e.g. Chicken Thigh"
-            {...register('name')}
-          />
+          <Input placeholder="e.g. Chicken Thigh" {...register("name")} />
           {errors.name && (
-            <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
+            <p className="text-xs text-destructive mt-1">
+              {errors.name.message}
+            </p>
           )}
         </div>
 
@@ -133,12 +100,17 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
           <Label className="text-xs text-muted-foreground mb-1 block">
             Category
           </Label>
-          <Select value={watch('category')} onValueChange={(val) => setValue('category', val as typeof categories[number])}>
+          <Select
+            value={watch("category")}
+            onValueChange={(val) =>
+              setValue("category", val as Category)
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
@@ -160,25 +132,28 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
             <Label className="text-xs text-muted-foreground mb-1 block">
               Quantity
             </Label>
-            <Input
-              type="number"
-              placeholder="1"
-              {...register('quantity')}
-            />
+            <Input type="number" placeholder="1" {...register("quantity")} />
             {errors.quantity && (
-              <p className="text-xs text-destructive mt-1">{errors.quantity.message}</p>
+              <p className="text-xs text-destructive mt-1">
+                {errors.quantity.message}
+              </p>
             )}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">
               Unit
             </Label>
-            <Select value={watch('unit')} onValueChange={(val) => setValue('unit', val as typeof units[number])}>
+            <Select
+              value={watch("unit")}
+              onValueChange={(val) =>
+                setValue("unit", val as Unit)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select unit" />
               </SelectTrigger>
               <SelectContent>
-                {units.map((u) => (
+                {UNITS.map((u) => (
                   <SelectItem key={u} value={u}>
                     {u}
                   </SelectItem>
@@ -201,11 +176,13 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
               type="number"
               placeholder="0.00"
               className="pl-7"
-              {...register('price')}
+              {...register("price")}
             />
           </div>
           {errors.price && (
-            <p className="text-xs text-destructive mt-1">{errors.price.message}</p>
+            <p className="text-xs text-destructive mt-1">
+              {errors.price.message}
+            </p>
           )}
         </div>
 
@@ -219,7 +196,7 @@ export default function IngredientForm({ ingredient, onSave, onDelete, onCancel 
         {/* Calculated Price */}
         <Card className="p-3 bg-background">
           <div className="text-xs text-muted-foreground">Price per unit</div>
-          <div className="text-xl font-bold">{calculatePricePerUnit()}</div>
+          <div className="text-xl font-bold">{calculatePricePerUnit(quantity, unit, price)}</div>
         </Card>
       </div>
 
