@@ -1,27 +1,64 @@
-import { useState } from 'react';
-import { Button, Input, Label, Card } from '@costmate/ui';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Button,
+  Input,
+  Label,
+  Card,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@costmate/ui';
 import { X } from 'lucide-react';
 
-const categories = ['Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'];
-const units = ['kg', 'g', 'L', 'ml', 'pc'];
+const categories = ['Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'] as const;
+const units = ['kg', 'g', 'L', 'ml', 'pc'] as const;
+
+const ingredientSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  category: z.enum(categories),
+  quantity: z.string().min(1, 'Quantity is required').refine(
+    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    'Quantity must be a positive number'
+  ),
+  unit: z.enum(units),
+  price: z.string().min(1, 'Price is required').refine(
+    (val) => !isNaN(Number(val)) && Number(val) >= 0,
+    'Price must be a valid number'
+  ),
+});
+
+type IngredientFormData = z.infer<typeof ingredientSchema>;
 
 interface IngredientFormProps {
-  onSave: (ingredient: {
-    name: string;
-    category: string;
-    quantity: string;
-    unit: string;
-    price: string;
-  }) => void;
+  onSave: (ingredient: IngredientFormData) => void;
   onCancel: () => void;
 }
 
 export default function IngredientForm({ onSave, onCancel }: IngredientFormProps) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('Meat');
-  const [quantity, setQuantity] = useState('1');
-  const [unit, setUnit] = useState('kg');
-  const [price, setPrice] = useState('');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<IngredientFormData>({
+    resolver: zodResolver(ingredientSchema),
+    defaultValues: {
+      name: '',
+      category: 'Meat',
+      quantity: '1',
+      unit: 'kg',
+      price: '',
+    },
+  });
+
+  const quantity = watch('quantity');
+  const unit = watch('unit');
+  const price = watch('price');
 
   const calculatePricePerUnit = () => {
     const qty = parseFloat(quantity) || 0;
@@ -52,8 +89,8 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
     return `₱${pricePerBase.toFixed(3)}/${baseUnit}`;
   };
 
-  const handleSave = () => {
-    onSave({ name, category, quantity, unit, price });
+  const onSubmit = (data: IngredientFormData) => {
+    onSave(data);
   };
 
   return (
@@ -80,9 +117,11 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
           </Label>
           <Input
             placeholder="e.g. Chicken Thigh"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            {...register('name')}
           />
+          {errors.name && (
+            <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
+          )}
         </div>
 
         {/* Category */}
@@ -90,17 +129,18 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
           <Label className="text-xs text-muted-foreground mb-1 block">
             Category
           </Label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full h-10 px-3 border border-input bg-background text-sm"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          <Select value={watch('category')} onValueChange={(val) => setValue('category', val as typeof categories[number])}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Divider */}
@@ -119,25 +159,28 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
             <Input
               type="number"
               placeholder="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              {...register('quantity')}
             />
+            {errors.quantity && (
+              <p className="text-xs text-destructive mt-1">{errors.quantity.message}</p>
+            )}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">
               Unit
             </Label>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="w-full h-10 px-3 border border-input bg-background text-sm"
-            >
-              {units.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
+            <Select value={watch('unit')} onValueChange={(val) => setValue('unit', val as typeof units[number])}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select unit" />
+              </SelectTrigger>
+              <SelectContent>
+                {units.map((u) => (
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -154,10 +197,12 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
               type="number"
               placeholder="0.00"
               className="pl-7"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              {...register('price')}
             />
           </div>
+          {errors.price && (
+            <p className="text-xs text-destructive mt-1">{errors.price.message}</p>
+          )}
         </div>
 
         {/* Divider */}
@@ -179,7 +224,7 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
         <Button variant="outline" className="flex-1" onClick={onCancel}>
           Cancel
         </Button>
-        <Button className="flex-1" onClick={handleSave}>
+        <Button className="flex-1" onClick={handleSubmit(onSubmit)}>
           Save
         </Button>
       </div>
