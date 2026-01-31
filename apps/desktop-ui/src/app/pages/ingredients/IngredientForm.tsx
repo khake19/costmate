@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@costmate/ui';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 
 const categories = ['Meat', 'Vegetables', 'Spices', 'Grain', 'Oil', 'Others'] as const;
 const units = ['kg', 'g', 'L', 'ml', 'pc'] as const;
@@ -34,11 +34,15 @@ const ingredientSchema = z.object({
 type IngredientFormData = z.infer<typeof ingredientSchema>;
 
 interface IngredientFormProps {
+  ingredient?: IngredientFormData;
   onSave: (ingredient: IngredientFormData) => void;
+  onDelete?: () => void;
   onCancel: () => void;
 }
 
-export default function IngredientForm({ onSave, onCancel }: IngredientFormProps) {
+export default function IngredientForm({ ingredient, onSave, onDelete, onCancel }: IngredientFormProps) {
+  const isEditing = !!ingredient;
+
   const {
     register,
     handleSubmit,
@@ -47,7 +51,7 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
     formState: { errors },
   } = useForm<IngredientFormData>({
     resolver: zodResolver(ingredientSchema),
-    defaultValues: {
+    defaultValues: ingredient ?? {
       name: '',
       category: 'Meat',
       quantity: '1',
@@ -97,7 +101,7 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
     <>
       {/* Panel Header */}
       <div className="px-4 py-3 border-b flex justify-between items-center">
-        <span className="font-bold text-sm">ADD INGREDIENT</span>
+        <span className="font-bold text-sm">{isEditing ? 'EDIT INGREDIENT' : 'ADD INGREDIENT'}</span>
         <Button
           variant="ghost"
           size="icon"
@@ -221,6 +225,16 @@ export default function IngredientForm({ onSave, onCancel }: IngredientFormProps
 
       {/* Panel Footer */}
       <div className="p-4 border-t flex gap-2">
+        {isEditing && onDelete && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20 hover:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
         <Button variant="outline" className="flex-1" onClick={onCancel}>
           Cancel
         </Button>

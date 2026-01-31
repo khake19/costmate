@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import App from './app/App';
 
 const root = ReactDOM.createRoot(
@@ -11,6 +12,7 @@ root.render(
   <StrictMode>
     <HashRouter>
       <App />
+      <Toaster position="bottom-center" />
     </HashRouter>
   </StrictMode>
 );
