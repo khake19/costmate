@@ -1,24 +1,39 @@
-import type { Unit } from '../types';
-import { UNIT_CONFIG } from '../constants';
+// Ingredient calculations
+export { calculatePricePerUnit, formatQuantityUnit } from './ingredient';
 
-export function calculatePricePerUnit(
-  quantity: string,
-  unit: Unit,
-  price: string
-): string {
-  const qty = parseFloat(quantity) || 0;
-  const priceVal = parseFloat(price) || 0;
+// Unit cost calculations
+export { calculateUnitCost, calculateLineItemCost } from './unit-cost';
 
-  if (qty === 0 || priceVal === 0) {
-    return '--';
-  }
+// Recipe calculations
+export {
+  calculateRecipeCost,
+  type RecipeCostInput,
+  type RecipeCostResult,
+} from './recipe';
 
-  const config = UNIT_CONFIG[unit];
-  const pricePerBase = priceVal / (qty * config.multiplier);
+// Pricing calculations
+export {
+  calculatePricing,
+  type PricingInput,
+  type PricingResult,
+} from './pricing';
 
-  return `₱${pricePerBase.toFixed(3)}/${config.baseUnit}`;
-}
+// Discount calculations
+export {
+  calculateDiscount,
+  type DiscountInput,
+  type DiscountResult,
+} from './discount';
 
-export function formatQuantityUnit(quantity: string, unit: Unit): string {
-  return `${quantity}${unit}`;
-}
+// OPEX calculations
+export { calculateOpex, type OpexInput, type OpexResult } from './opex';
+
+// Projection calculations
+export {
+  calculateRecipeProjection,
+  calculateSummary,
+  type RecipeProjectionInput,
+  type RecipeProjectionResult,
+  type SummaryInput,
+  type SummaryResult,
+} from './projections';
