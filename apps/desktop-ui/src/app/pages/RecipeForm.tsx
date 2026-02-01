@@ -41,7 +41,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@costmate/ui";
-import { ArrowLeft, Check, Plus, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useIngredients, usePackaging, useRecipes } from "../hooks";
 
@@ -69,11 +69,15 @@ export default function RecipeForm() {
     addPackaging: addPackagingToDb,
     removePackaging: removePackagingFromDb,
   } = usePackaging();
-  const { recipes, addRecipe, updateRecipe, removeRecipe } = useRecipes();
+  const { recipes, addRecipe, updateRecipe, removeRecipe, addImage, getImage, hasImage } = useRecipes();
 
   const deletedPackagingRef = useRef<PackagingDocument | null>(null);
   const deletedRecipeRef = useRef<RecipeDocument | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [initialLoading, setInitialLoading] = useState(isEditing);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [pendingImage, setPendingImage] = useState<Blob | null>(null);
+  const [imageExpanded, setImageExpanded] = useState(false);
 
   const [ingredientSearchOpen, setIngredientSearchOpen] = useState(false);
   const [packagingSearchOpen, setPackagingSearchOpen] = useState(false);
@@ -116,10 +120,18 @@ export default function RecipeForm() {
           ordersPerMonth: recipe.ordersPerMonth,
           isVatRegistered: recipe.isVatRegistered,
         });
+        // Load existing image
+        if (hasImage(recipe)) {
+          getImage(id).then((blob) => {
+            if (blob) {
+              setImagePreview(URL.createObjectURL(blob));
+            }
+          });
+        }
       }
       setInitialLoading(false);
     }
-  }, [isEditing, id, recipes, reset]);
+  }, [isEditing, id, recipes, reset, getImage, hasImage]);
 
   const {
     fields: ingredientFields,
@@ -174,14 +186,48 @@ export default function RecipeForm() {
     return `₱${value.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be less than 2MB");
+      return;
+    }
+
+    setPendingImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    setPendingImage(null);
+    setImagePreview(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
   const onSubmit = async (data: RecipeFormData) => {
     try {
+      let recipeId = id;
       if (isEditing && id) {
         await updateRecipe(id, data);
         toast.success(`"${data.name}" updated`);
       } else {
-        await addRecipe(data);
+        const newRecipe = await addRecipe(data);
+        recipeId = newRecipe._id;
         toast.success(`"${data.name}" saved`);
+      }
+      // Save image if there's a pending one
+      if (pendingImage && recipeId) {
+        await addImage(recipeId, pendingImage);
       }
       navigate("/");
     } catch {
@@ -393,17 +439,57 @@ export default function RecipeForm() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Form */}
         <div className="flex-1 p-4 border-r overflow-auto">
-          {/* Recipe Name */}
-          <div className="mb-4">
-            <Label className="text-xs text-muted-foreground mb-1 block">
-              Recipe Name
-            </Label>
-            <Input placeholder="Enter recipe name..." {...register("name")} />
-            {errors.name && (
-              <p className="text-xs text-destructive mt-1">
-                {errors.name.message}
-              </p>
-            )}
+          {/* Recipe Name & Image */}
+          <div className="flex gap-4 mb-4">
+            {/* Image Picker */}
+            <div className="flex-shrink-0">
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              {imagePreview ? (
+                <div className="relative group">
+                  <img
+                    src={imagePreview}
+                    alt="Recipe"
+                    className="w-24 h-24 object-cover border cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setImageExpanded(true)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="w-24 h-24 border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  <ImagePlus className="h-6 w-6 mb-1" />
+                  <span className="text-xs">Add Photo</span>
+                </button>
+              )}
+            </div>
+
+            {/* Name Field */}
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground mb-1 block">
+                Recipe Name
+              </Label>
+              <Input placeholder="Enter recipe name..." {...register("name")} />
+              {errors.name && (
+                <p className="text-xs text-destructive mt-1">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Ingredients Section */}
@@ -897,6 +983,29 @@ export default function RecipeForm() {
           </div>
         </div>
       </div>
+
+      {/* Expanded Image Modal */}
+      {imageExpanded && imagePreview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center cursor-pointer"
+          onClick={() => setImageExpanded(false)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh]">
+            <img
+              src={imagePreview}
+              alt="Recipe"
+              className="max-w-full max-h-[90vh] object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setImageExpanded(false)}
+              className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { RecipeDocument, PouchLike } from './types';
 
 export type RecipeInput = Omit<
   RecipeDocument,
-  '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'
+  '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt' | '_attachments'
 >;
 
 export function createRecipesDb(pouch: PouchLike<RecipeDocument>) {
@@ -52,6 +52,35 @@ export function createRecipesDb(pouch: PouchLike<RecipeDocument>) {
     async remove(id: string): Promise<void> {
       const doc = await pouch.get(id);
       await pouch.remove(doc);
+    },
+
+    // Image attachment methods
+    async addImage(id: string, imageBlob: Blob): Promise<void> {
+      const doc = await pouch.get(id);
+      if (!doc._rev) throw new Error('Document has no revision');
+      await pouch.putAttachment(id, 'image', doc._rev, imageBlob, imageBlob.type);
+    },
+
+    async getImage(id: string): Promise<Blob | null> {
+      try {
+        return await pouch.getAttachment(id, 'image');
+      } catch {
+        return null;
+      }
+    },
+
+    async removeImage(id: string): Promise<void> {
+      const doc = await pouch.get(id);
+      if (!doc._rev) throw new Error('Document has no revision');
+      try {
+        await pouch.removeAttachment(id, 'image', doc._rev);
+      } catch {
+        // Image might not exist, ignore
+      }
+    },
+
+    hasImage(doc: RecipeDocument): boolean {
+      return Boolean(doc._attachments?.image);
     },
   };
 }

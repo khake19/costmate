@@ -72,5 +72,10 @@ export function useRecipes() {
     updateRecipe: store.updateRecipe,
     removeRecipe: store.removeRecipe,
     refetch: store.fetchRecipes,
+    // Image methods (pass through to db)
+    addImage: recipesDb.addImage,
+    getImage: recipesDb.getImage,
+    removeImage: recipesDb.removeImage,
+    hasImage: recipesDb.hasImage,
   };
 }

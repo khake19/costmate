@@ -1,18 +1,62 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button, Input, Card } from "@costmate/ui";
-import { Plus, Search } from "lucide-react";
+import { ImageIcon, Plus, Search } from "lucide-react";
 import {
   calculateLineItemCost,
   calculatePricing,
   calculateRecipeCost,
+  type RecipeDocument,
 } from "@costmate/core";
 import { useRecipes } from "../hooks";
+
+// Small component to load and display recipe image
+function RecipeImage({ recipe, getImage, hasImage }: {
+  recipe: RecipeDocument;
+  getImage: (id: string) => Promise<Blob | null>;
+  hasImage: (doc: RecipeDocument) => boolean;
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (hasImage(recipe)) {
+      getImage(recipe._id).then((blob) => {
+        if (blob) {
+          setImageUrl(URL.createObjectURL(blob));
+        }
+      });
+    }
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [recipe._id, hasImage, getImage]);
+
+  if (!hasImage(recipe)) {
+    return (
+      <div className="w-14 h-14 bg-muted flex items-center justify-center flex-shrink-0">
+        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!imageUrl) {
+    return <div className="w-14 h-14 bg-muted animate-pulse flex-shrink-0" />;
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={recipe.name}
+      className="w-14 h-14 object-cover flex-shrink-0"
+    />
+  );
+}
 
 const VAT_PERCENT = 0.12;
 
 export default function Home() {
   const navigate = useNavigate();
-  const { recipes, loading, error } = useRecipes();
+  const { recipes, loading, error, getImage, hasImage } = useRecipes();
 
   const recipesWithPricing = recipes.map((recipe) => {
     const ingredientCosts = recipe.ingredients.map((ing) =>
@@ -114,30 +158,35 @@ export default function Home() {
                 onClick={() => navigate(`/recipe/${recipe._id}`)}
                 className="p-3 hover:bg-accent cursor-pointer transition-colors"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold">{recipe.name}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {recipe.ingredients.length} ingredients ·{" "}
-                      {recipe.packaging.length} packaging
+                <div className="flex gap-3">
+                  <RecipeImage recipe={recipe} getImage={getImage} hasImage={hasImage} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold">{recipe.name}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {recipe.ingredients.length} ingredients ·{" "}
+                          {recipe.packaging.length} packaging
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">
+                          Selling Price
+                        </div>
+                        <div className="font-bold text-lg">
+                          {formatCurrency(recipe.sellingPrice)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                      <span>Cost: {formatCurrency(recipe.cost)}</span>
+                      <span>Profit: {formatCurrency(recipe.profit)}</span>
+                      <span>Margin: {recipe.margin}%</span>
+                      <span className="ml-auto">
+                        {recipe.ordersPerMonth} orders/mo
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">
-                      Selling Price
-                    </div>
-                    <div className="font-bold text-lg">
-                      {formatCurrency(recipe.sellingPrice)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                  <span>Cost: {formatCurrency(recipe.cost)}</span>
-                  <span>Profit: {formatCurrency(recipe.profit)}</span>
-                  <span>Margin: {recipe.margin}%</span>
-                  <span className="ml-auto">
-                    {recipe.ordersPerMonth} orders/mo
-                  </span>
                 </div>
               </Card>
             ))}

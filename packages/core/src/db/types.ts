@@ -35,6 +35,20 @@ export interface PackagingItemDocument {
   unitCost: number;
 }
 
+// PouchDB attachment stub
+export interface AttachmentStub {
+  content_type: string;
+  digest: string;
+  length: number;
+  stub: true;
+}
+
+// PouchDB attachment data
+export interface AttachmentData {
+  content_type: string;
+  data: Blob | string;
+}
+
 // Recipe document
 export interface RecipeDocument extends BaseDocument {
   type: 'recipe';
@@ -45,12 +59,15 @@ export interface RecipeDocument extends BaseDocument {
   batchSize: string;
   ordersPerMonth: string;
   isVatRegistered: boolean;
+  _attachments?: {
+    image?: AttachmentStub | AttachmentData;
+  };
 }
 
 // Generic PouchDB interface (minimal, platform-agnostic)
 export interface PouchLike<T> {
   put(doc: T): Promise<{ ok: boolean; id: string; rev: string }>;
-  get(id: string): Promise<T>;
+  get(id: string, options?: { attachments?: boolean }): Promise<T>;
   remove(doc: T): Promise<{ ok: boolean; id: string; rev: string }>;
   allDocs(options?: {
     include_docs?: boolean;
@@ -59,4 +76,17 @@ export interface PouchLike<T> {
   }): Promise<{
     rows: Array<{ id: string; doc?: T }>;
   }>;
+  putAttachment(
+    docId: string,
+    attachmentId: string,
+    rev: string,
+    attachment: Blob,
+    type: string
+  ): Promise<{ ok: boolean; id: string; rev: string }>;
+  getAttachment(docId: string, attachmentId: string): Promise<Blob>;
+  removeAttachment(
+    docId: string,
+    attachmentId: string,
+    rev: string
+  ): Promise<{ ok: boolean; id: string; rev: string }>;
 }
