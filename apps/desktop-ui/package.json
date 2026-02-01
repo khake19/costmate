@@ -5,6 +5,10 @@
   "dependencies": {
     "@costmate/core": "workspace:*",
     "@costmate/ui": "workspace:*",
+    "pouchdb-browser": "^9.0.0",
     "react-router-dom": "^7.13.0"
+  },
+  "devDependencies": {
+    "@types/pouchdb-browser": "^6.1.5"
   }
 }

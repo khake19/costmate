@@ -2,96 +2,99 @@ import {
   CATEGORIES,
   calculatePricePerUnit,
   formatQuantityUnit,
-  type Ingredient,
-  type IngredientFormData,
+  type IngredientDocument,
+  type IngredientInput,
+  type Unit,
 } from "@costmate/core";
 import { Button, Card, Input, cn } from "@costmate/ui";
 import { Plus, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { useIngredients } from "../../hooks";
 import IngredientForm from "./IngredientForm";
 
 const filterCategories = ["All", ...CATEGORIES] as const;
 
 export default function Ingredients() {
+  const {
+    ingredients,
+    loading,
+    addIngredient,
+    updateIngredient,
+    removeIngredient,
+  } = useIngredients();
+
   const [showPanel, setShowPanel] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(
-    null,
-  );
-  const deletedIngredientRef = useRef<{
-    ingredient: Ingredient;
-    index: number;
-  } | null>(null);
+  const [editingIngredient, setEditingIngredient] =
+    useState<IngredientDocument | null>(null);
+  const deletedIngredientRef = useRef<IngredientDocument | null>(null);
 
   const handleAdd = () => {
     setEditingIngredient(null);
     setShowPanel(true);
   };
 
-  const handleEdit = (ingredient: Ingredient) => {
+  const handleEdit = (ingredient: IngredientDocument) => {
     setEditingIngredient(ingredient);
     setShowPanel(true);
   };
 
-  const handleSave = (data: IngredientFormData) => {
-    if (editingIngredient) {
-      setIngredients((prev) =>
-        prev.map((ing) =>
-          ing.id === editingIngredient.id
-            ? { ...data, id: editingIngredient.id }
-            : ing,
-        ),
-      );
-    } else {
-      const newIngredient: Ingredient = {
-        ...data,
-        id: crypto.randomUUID(),
-      };
-      setIngredients((prev) => [...prev, newIngredient]);
+  const handleSave = async (data: IngredientInput) => {
+    try {
+      if (editingIngredient) {
+        await updateIngredient(editingIngredient._id, data);
+      } else {
+        await addIngredient(data);
+      }
+      setShowPanel(false);
+      setEditingIngredient(null);
+    } catch (err) {
+      toast.error("Failed to save ingredient");
     }
-    setShowPanel(false);
-    setEditingIngredient(null);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!editingIngredient) return;
 
-    const index = ingredients.findIndex(
-      (ing) => ing.id === editingIngredient.id,
-    );
-    deletedIngredientRef.current = { ingredient: editingIngredient, index };
+    deletedIngredientRef.current = editingIngredient;
 
-    setIngredients((prev) =>
-      prev.filter((ing) => ing.id !== editingIngredient.id),
-    );
-    setShowPanel(false);
-    setEditingIngredient(null);
+    try {
+      await removeIngredient(editingIngredient._id);
+      setShowPanel(false);
+      setEditingIngredient(null);
 
-    toast(`"${editingIngredient.name}" deleted`, {
-      action: {
-        label: "Undo",
-        onClick: () => {
-          if (deletedIngredientRef.current) {
-            const { ingredient, index } = deletedIngredientRef.current;
-            setIngredients((prev) => {
-              const newList = [...prev];
-              newList.splice(index, 0, ingredient);
-              return newList;
-            });
-            deletedIngredientRef.current = null;
-          }
+      toast(`"${editingIngredient.name}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (deletedIngredientRef.current) {
+              const { name, category, quantity, unit, price } =
+                deletedIngredientRef.current;
+              await addIngredient({ name, category, quantity, unit, price });
+              deletedIngredientRef.current = null;
+            }
+          },
         },
-      },
-      duration: 5000,
-    });
+        duration: 5000,
+      });
+    } catch (err) {
+      toast.error("Failed to delete ingredient");
+    }
   };
 
   const handleCancel = () => {
     setShowPanel(false);
     setEditingIngredient(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-muted-foreground">Loading ingredients...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -128,11 +131,11 @@ export default function Ingredients() {
           {ingredients
             .filter(
               (ing) =>
-                activeCategory === "All" || ing.category === activeCategory,
+                activeCategory === "All" || ing.category === activeCategory
             )
             .map((ingredient) => (
               <Card
-                key={ingredient.id}
+                key={ingredient._id}
                 onClick={() => handleEdit(ingredient)}
                 className="p-3 flex justify-between items-center hover:bg-accent cursor-pointer transition-colors"
               >
@@ -140,16 +143,19 @@ export default function Ingredients() {
                   <div className="font-medium">{ingredient.name}</div>
                   <div className="text-xs text-muted-foreground">
                     {ingredient.category} ·{" "}
-                    {formatQuantityUnit(ingredient.quantity, ingredient.unit)} =
-                    ₱{ingredient.price}
+                    {formatQuantityUnit(
+                      ingredient.quantity,
+                      ingredient.unit as Unit
+                    )}{" "}
+                    = ₱{ingredient.price}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">
                     {calculatePricePerUnit(
                       ingredient.quantity,
-                      ingredient.unit,
-                      ingredient.price,
+                      ingredient.unit as Unit,
+                      ingredient.price
                     )}
                   </div>
                 </div>
@@ -173,12 +179,22 @@ export default function Ingredients() {
       <div
         className={cn(
           "w-96 bg-muted border-l flex flex-col transition-all duration-200 ease-in-out",
-          showPanel ? "translate-x-0" : "translate-x-full w-0 border-l-0",
+          showPanel ? "translate-x-0" : "translate-x-full w-0 border-l-0"
         )}
       >
         {showPanel && (
           <IngredientForm
-            ingredient={editingIngredient ?? undefined}
+            ingredient={
+              editingIngredient
+                ? {
+                    name: editingIngredient.name,
+                    category: editingIngredient.category,
+                    quantity: editingIngredient.quantity,
+                    unit: editingIngredient.unit,
+                    price: editingIngredient.price,
+                  }
+                : undefined
+            }
             onSave={handleSave}
             onDelete={editingIngredient ? handleDelete : undefined}
             onCancel={handleCancel}
