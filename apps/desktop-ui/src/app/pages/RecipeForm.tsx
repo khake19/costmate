@@ -17,6 +17,15 @@ import {
   type Unit,
 } from "@costmate/core";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   Button,
   Card,
   Command,
@@ -342,17 +351,38 @@ export default function RecipeForm() {
         <span className="font-bold flex-1 text-center">
           {isEditing ? "Edit Recipe" : "New Recipe"}
         </span>
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2">
           {isEditing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive bg-destructive/10 hover:bg-destructive/20 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this recipe?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete "{watchedValues.name || "this recipe"}". This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <Button size="sm" onClick={handleSubmit(onSubmit)}>
             Save
@@ -796,6 +826,7 @@ export default function RecipeForm() {
               VAT Registered (12%)
             </Label>
           </div>
+
         </div>
 
         {/* Right: Live Preview */}
