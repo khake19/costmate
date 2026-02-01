@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 import {
   calculateLineItemCost,
@@ -16,15 +17,19 @@ import {
 import {
   Button,
   Card,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@costmate/ui";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Search, Trash2 } from "lucide-react";
 import { useIngredients } from "../hooks";
 
 const VAT_PERCENT = 0.12;
@@ -43,6 +48,7 @@ export default function NewRecipe() {
   const navigate = useNavigate();
   const { ingredients: availableIngredients, loading: ingredientsLoading } =
     useIngredients();
+  const [ingredientSearchOpen, setIngredientSearchOpen] = useState(false);
 
   const {
     register,
@@ -122,29 +128,27 @@ export default function NewRecipe() {
     navigate("/");
   };
 
-  const handleSelectIngredient = (index: number, ingredientId: string) => {
-    const ingredient = availableIngredients.find(
-      (ing) => ing._id === ingredientId
+  const handleAddIngredient = (ingredient: IngredientDocument) => {
+    // Check if already added
+    const alreadyAdded = watchedValues.ingredients.some(
+      (ing) => ing.ingredientId === ingredient._id
     );
-    if (!ingredient) return;
+    if (alreadyAdded) {
+      setIngredientSearchOpen(false);
+      return;
+    }
 
     const unitCost = getUnitCost(ingredient);
     const baseUnit = UNIT_CONFIG[ingredient.unit].baseUnit as Unit;
 
-    setValue(`ingredients.${index}.ingredientId`, ingredient._id);
-    setValue(`ingredients.${index}.name`, ingredient.name);
-    setValue(`ingredients.${index}.unit`, baseUnit);
-    setValue(`ingredients.${index}.unitCost`, unitCost);
-  };
-
-  const handleAddIngredient = () => {
     appendIngredient({
-      ingredientId: "",
-      name: "",
+      ingredientId: ingredient._id,
+      name: ingredient.name,
       quantity: "1",
-      unit: "g",
-      unitCost: 0,
+      unit: baseUnit,
+      unitCost,
     });
+    setIngredientSearchOpen(false);
   };
 
   const handleAddPackaging = () => {
@@ -199,115 +203,145 @@ export default function NewRecipe() {
               <Label className="text-xs text-muted-foreground">
                 Ingredients
               </Label>
-              {availableIngredients.length === 0 && !ingredientsLoading && (
-                <span className="text-xs text-muted-foreground">
-                  No ingredients yet.{" "}
-                  <button
-                    type="button"
-                    className="text-primary underline"
-                    onClick={() => navigate("/ingredients")}
-                  >
-                    Add some first
-                  </button>
-                </span>
-              )}
             </div>
 
-            {ingredientFields.length === 0 ? (
-              <Card className="p-4 text-center border-dashed">
-                <div className="text-muted-foreground text-xs mb-2">
-                  No ingredients yet
-                </div>
+            {/* Ingredient Search */}
+            <Popover
+              open={ingredientSearchOpen}
+              onOpenChange={setIngredientSearchOpen}
+            >
+              <PopoverTrigger asChild>
                 <Button
-                  type="button"
-                  variant="link"
+                  variant="outline"
                   size="sm"
-                  className="text-xs h-auto p-0"
-                  onClick={handleAddIngredient}
+                  className="w-full justify-start text-muted-foreground mb-2"
                   disabled={availableIngredients.length === 0}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add your first ingredient
+                  <Search className="h-4 w-4 mr-2" />
+                  {availableIngredients.length === 0
+                    ? "No ingredients yet"
+                    : "Search ingredients..."}
                 </Button>
-              </Card>
-            ) : (
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search ingredients..." />
+                  <CommandList>
+                    <CommandEmpty>No ingredients found.</CommandEmpty>
+                    <CommandGroup>
+                      {availableIngredients.map((ingredient) => {
+                        const isAdded = watchedValues.ingredients.some(
+                          (ing) => ing.ingredientId === ingredient._id
+                        );
+                        return (
+                          <CommandItem
+                            key={ingredient._id}
+                            value={ingredient.name}
+                            onSelect={() => handleAddIngredient(ingredient)}
+                            disabled={isAdded}
+                            className={isAdded ? "opacity-50" : ""}
+                          >
+                            <div className="flex-1">
+                              <span>{ingredient.name}</span>
+                              {isAdded && (
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  (added)
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              ₱{getUnitCost(ingredient).toFixed(2)}/
+                              {UNIT_CONFIG[ingredient.unit].baseUnit}
+                            </span>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            {availableIngredients.length === 0 && !ingredientsLoading && (
+              <p className="text-xs text-muted-foreground mb-2">
+                <button
+                  type="button"
+                  className="text-primary underline"
+                  onClick={() => navigate("/ingredients")}
+                >
+                  Add ingredients first
+                </button>
+              </p>
+            )}
+
+            {/* Ingredient List */}
+            {ingredientFields.length > 0 && (
               <div className="space-y-2">
+                {/* Header */}
+                <div className="flex gap-3 items-center px-3 text-xs text-muted-foreground">
+                  <div className="flex-1">Ingredient</div>
+                  <div className="w-20 text-center">Qty</div>
+                  <div className="w-10 text-center">Unit</div>
+                  <div className="w-20 text-right">Rate</div>
+                  <div className="w-24 text-right">Cost</div>
+                  <div className="w-8" />
+                </div>
                 {ingredientFields.map((field, index) => (
                   <Card key={field.id} className="p-3">
-                    <div className="flex gap-2 items-start">
-                      {/* Ingredient Picker */}
-                      <div className="flex-1">
-                        <Select
-                          value={watch(`ingredients.${index}.ingredientId`)}
-                          onValueChange={(val) =>
-                            handleSelectIngredient(index, val)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select ingredient" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableIngredients.map((ing) => (
-                              <SelectItem key={ing._id} value={ing._id}>
-                                {ing.name} (₱
-                                {getUnitCost(ing).toFixed(2)}/
-                                {UNIT_CONFIG[ing.unit].baseUnit})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="flex gap-3 items-center">
+                      <div className="flex-1 font-medium text-sm">
+                        {watch(`ingredients.${index}.name`)}
                       </div>
-                      {/* Quantity */}
                       <div className="w-20">
                         <Input
                           type="number"
                           placeholder="Qty"
+                          className="text-center"
                           {...register(`ingredients.${index}.quantity`)}
                         />
                       </div>
-                      {/* Unit (read-only, set by ingredient) */}
-                      <div className="w-16">
-                        <Input
-                          value={watch(`ingredients.${index}.unit`)}
-                          disabled
-                          className="text-center bg-muted"
-                        />
+                      <div className="w-10 text-sm text-muted-foreground text-center">
+                        {watch(`ingredients.${index}.unit`)}
                       </div>
-                      {/* Unit Cost (read-only) */}
-                      <div className="w-24">
-                        <Input
-                          value={`₱${watch(`ingredients.${index}.unitCost`).toFixed(2)}`}
-                          disabled
-                          className="text-right bg-muted"
-                        />
+                      <div className="w-20 text-sm text-right">
+                        ₱{watch(`ingredients.${index}.unitCost`).toFixed(2)}
+                      </div>
+                      <div className="w-24 text-sm font-medium text-right">
+                        {formatCurrency(ingredientCosts[index])}
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => removeIngredient(index)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1 text-right">
-                      Line cost: {formatCurrency(ingredientCosts[index])}
-                    </div>
                   </Card>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={handleAddIngredient}
-                  disabled={availableIngredients.length === 0}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Ingredient
-                </Button>
+
+                {/* Total */}
+                <div className="flex gap-3 items-center px-3 text-sm">
+                  <div className="flex-1" />
+                  <div className="w-20" />
+                  <div className="w-10" />
+                  <div className="w-20 text-right text-muted-foreground">Total:</div>
+                  <div className="w-24 text-right font-medium">
+                    {formatCurrency(recipeCost.totalIngredientsCost)}
+                  </div>
+                  <div className="w-8" />
+                </div>
               </div>
+            )}
+
+            {ingredientFields.length === 0 && (
+              <Card className="p-6 text-center border-dashed">
+                <div className="text-muted-foreground text-xs">
+                  Search and add ingredients above
+                </div>
+              </Card>
             )}
           </div>
 
@@ -372,6 +406,9 @@ export default function NewRecipe() {
                           />
                         </div>
                       </div>
+                      <div className="w-24 text-sm font-medium text-right flex items-center justify-end">
+                        {formatCurrency(packagingCosts[index])}
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
@@ -381,9 +418,6 @@ export default function NewRecipe() {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 text-right">
-                      Line cost: {formatCurrency(packagingCosts[index])}
                     </div>
                   </Card>
                 ))}

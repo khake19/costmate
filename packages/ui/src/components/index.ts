@@ -17,3 +17,18 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 } from './select';
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverAnchor,
+} from './popover';
+export {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandSeparator,
+} from './command';
