@@ -30,14 +30,14 @@ export const packagingItemSchema = z.object({
 
 export const recipeSchema = z.object({
   name: z.string().min(1, 'Recipe name is required'),
-  ingredients: z.array(recipeIngredientSchema),
+  ingredients: z.array(recipeIngredientSchema).min(1, 'At least one ingredient is required'),
   packaging: z.array(packagingItemSchema),
   targetMarginPercent: z
     .string()
     .min(1, 'Target margin is required')
     .refine(
-      (val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 100,
-      'Margin must be between 1-100%'
+      (val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) < 100,
+      'Margin must be between 1-99%'
     ),
   batchSize: z
     .string()

@@ -12,7 +12,7 @@ const VAT_PERCENT = 0.12;
 
 export default function Home() {
   const navigate = useNavigate();
-  const { recipes, loading } = useRecipes();
+  const { recipes, loading, error } = useRecipes();
 
   const recipesWithPricing = recipes.map((recipe) => {
     const ingredientCosts = recipe.ingredients.map((ing) =>
@@ -95,6 +95,13 @@ export default function Home() {
         {loading && (
           <div className="text-center text-muted-foreground py-8">
             Loading recipes...
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="text-center text-destructive py-8">
+            Failed to load recipes. Please try again.
           </div>
         )}
 

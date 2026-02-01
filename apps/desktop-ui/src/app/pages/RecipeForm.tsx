@@ -516,9 +516,9 @@ export default function RecipeForm() {
             )}
 
             {ingredientFields.length === 0 && (
-              <Card className="p-6 text-center border-dashed">
-                <div className="text-muted-foreground text-xs">
-                  Search and add ingredients above
+              <Card className={`p-6 text-center border-dashed ${errors.ingredients ? "border-destructive" : ""}`}>
+                <div className={errors.ingredients ? "text-destructive text-xs" : "text-muted-foreground text-xs"}>
+                  {errors.ingredients?.message || "Search and add ingredients above"}
                 </div>
               </Card>
             )}

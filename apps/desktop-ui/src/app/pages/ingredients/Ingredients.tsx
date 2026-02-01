@@ -19,6 +19,7 @@ export default function Ingredients() {
   const {
     ingredients,
     loading,
+    error,
     addIngredient,
     updateIngredient,
     removeIngredient,
@@ -92,6 +93,14 @@ export default function Ingredients() {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-muted-foreground">Loading ingredients...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-destructive">Failed to load ingredients. Please try again.</div>
       </div>
     );
   }
