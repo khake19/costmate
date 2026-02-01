@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   calculateLineItemCost,
@@ -11,6 +11,7 @@ import {
   recipeSchema,
   UNIT_CONFIG,
   type IngredientDocument,
+  type PackagingDocument,
   type RecipeFormData,
   type Unit,
 } from "@costmate/core";
@@ -23,14 +24,16 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
   Input,
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@costmate/ui";
-import { ArrowLeft, Plus, Search, Trash2 } from "lucide-react";
-import { useIngredients } from "../hooks";
+import { ArrowLeft, Check, Plus, Search, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useIngredients, usePackaging } from "../hooks";
 
 const VAT_PERCENT = 0.12;
 
@@ -48,7 +51,19 @@ export default function NewRecipe() {
   const navigate = useNavigate();
   const { ingredients: availableIngredients, loading: ingredientsLoading } =
     useIngredients();
+  const {
+    packaging: availablePackaging,
+    addPackaging: addPackagingToDb,
+    removePackaging: removePackagingFromDb,
+  } = usePackaging();
+
+  const deletedPackagingRef = useRef<PackagingDocument | null>(null);
+
   const [ingredientSearchOpen, setIngredientSearchOpen] = useState(false);
+  const [packagingSearchOpen, setPackagingSearchOpen] = useState(false);
+  const [packagingSearch, setPackagingSearch] = useState("");
+  const [creatingPackaging, setCreatingPackaging] = useState(false);
+  const [newPackagingCost, setNewPackagingCost] = useState("");
 
   const {
     register,
@@ -129,7 +144,6 @@ export default function NewRecipe() {
   };
 
   const handleAddIngredient = (ingredient: IngredientDocument) => {
-    // Check if already added
     const alreadyAdded = watchedValues.ingredients.some(
       (ing) => ing.ingredientId === ingredient._id
     );
@@ -151,14 +165,90 @@ export default function NewRecipe() {
     setIngredientSearchOpen(false);
   };
 
-  const handleAddPackaging = () => {
+  const handleAddPackaging = (pkg: PackagingDocument) => {
+    const alreadyAdded = watchedValues.packaging.some(
+      (p) => p.id === pkg._id
+    );
+    if (alreadyAdded) {
+      setPackagingSearchOpen(false);
+      return;
+    }
+
     appendPackaging({
-      id: crypto.randomUUID(),
-      name: "",
+      id: pkg._id,
+      name: pkg.name,
       quantity: "1",
-      unitCost: 0,
+      unitCost: pkg.unitCost,
     });
+    setPackagingSearchOpen(false);
+    setPackagingSearch("");
   };
+
+  const handleCreatePackaging = async () => {
+    const cost = parseFloat(newPackagingCost) || 0;
+    if (!packagingSearch.trim() || cost <= 0) return;
+
+    const newPkg = await addPackagingToDb({
+      name: packagingSearch.trim(),
+      unitCost: cost,
+    });
+
+    appendPackaging({
+      id: newPkg._id,
+      name: newPkg.name,
+      quantity: "1",
+      unitCost: newPkg.unitCost,
+    });
+
+    setPackagingSearchOpen(false);
+    setPackagingSearch("");
+    setNewPackagingCost("");
+    setCreatingPackaging(false);
+  };
+
+  const handleDeletePackaging = async (
+    e: React.MouseEvent,
+    pkg: PackagingDocument
+  ) => {
+    e.stopPropagation();
+    deletedPackagingRef.current = pkg;
+
+    // Also remove from recipe if it was added
+    const addedIndex = watchedValues.packaging.findIndex((p) => p.id === pkg._id);
+    if (addedIndex !== -1) {
+      removePackaging(addedIndex);
+    }
+
+    try {
+      await removePackagingFromDb(pkg._id);
+
+      toast(`"${pkg.name}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (deletedPackagingRef.current) {
+              const { name, unitCost } = deletedPackagingRef.current;
+              await addPackagingToDb({ name, unitCost });
+              deletedPackagingRef.current = null;
+            }
+          },
+        },
+        duration: 5000,
+      });
+    } catch {
+      toast.error("Failed to delete packaging");
+    }
+  };
+
+  const filteredPackaging = availablePackaging.filter((pkg) =>
+    pkg.name.toLowerCase().includes(packagingSearch.toLowerCase())
+  );
+
+  const showCreateOption =
+    packagingSearch.trim() &&
+    !filteredPackaging.some(
+      (pkg) => pkg.name.toLowerCase() === packagingSearch.toLowerCase()
+    );
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -353,67 +443,186 @@ export default function NewRecipe() {
               </Label>
             </div>
 
-            {packagingFields.length === 0 ? (
-              <Card className="p-4 text-center border-dashed">
-                <div className="text-muted-foreground text-xs mb-2">
-                  No packaging items yet
-                </div>
+            {/* Packaging Search */}
+            <Popover
+              open={packagingSearchOpen}
+              onOpenChange={(open) => {
+                setPackagingSearchOpen(open);
+                if (!open) {
+                  setPackagingSearch("");
+                  setCreatingPackaging(false);
+                  setNewPackagingCost("");
+                }
+              }}
+            >
+              <PopoverTrigger asChild>
                 <Button
-                  type="button"
-                  variant="link"
+                  variant="outline"
                   size="sm"
-                  className="text-xs h-auto p-0"
-                  onClick={handleAddPackaging}
+                  className="w-full justify-start text-muted-foreground mb-2"
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add packaging
+                  <Search className="h-4 w-4 mr-2" />
+                  Search or create packaging...
                 </Button>
-              </Card>
-            ) : (
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                {creatingPackaging ? (
+                  <div className="p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Create "{packagingSearch}"
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setCreatingPackaging(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">
+                        Unit Cost
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          ₱
+                        </span>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          className="pl-7"
+                          value={newPackagingCost}
+                          onChange={(e) => setNewPackagingCost(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleCreatePackaging}
+                      disabled={!newPackagingCost || parseFloat(newPackagingCost) <= 0}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Create & Add
+                    </Button>
+                  </div>
+                ) : (
+                  <Command>
+                    <CommandInput
+                      placeholder="Search packaging..."
+                      value={packagingSearch}
+                      onValueChange={setPackagingSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        {packagingSearch ? (
+                          <span className="text-muted-foreground">
+                            No packaging found
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Type to search or create
+                          </span>
+                        )}
+                      </CommandEmpty>
+                      {filteredPackaging.length > 0 && (
+                        <CommandGroup>
+                          {filteredPackaging.map((pkg) => {
+                            const isAdded = watchedValues.packaging.some(
+                              (p) => p.id === pkg._id
+                            );
+                            return (
+                              <CommandItem
+                                key={pkg._id}
+                                value={pkg.name}
+                                onSelect={() => handleAddPackaging(pkg)}
+                                disabled={isAdded}
+                                className={isAdded ? "opacity-50" : ""}
+                              >
+                                <div className="flex-1">
+                                  <span>{pkg.name}</span>
+                                  {isAdded && (
+                                    <span className="ml-2 text-xs text-muted-foreground">
+                                      (added)
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-xs text-muted-foreground mr-2">
+                                  ₱{pkg.unitCost.toFixed(2)}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => handleDeletePackaging(e, pkg)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      )}
+                      {showCreateOption && (
+                        <>
+                          {filteredPackaging.length > 0 && <CommandSeparator />}
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => setCreatingPackaging(true)}
+                              className="text-primary"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Create "{packagingSearch}"
+                            </CommandItem>
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            {/* Packaging List */}
+            {packagingFields.length > 0 && (
               <div className="space-y-2">
+                {/* Header */}
+                <div className="flex gap-3 items-center px-3 text-xs text-muted-foreground">
+                  <div className="flex-1">Item</div>
+                  <div className="w-20 text-center">Qty</div>
+                  <div className="w-20 text-right">Rate</div>
+                  <div className="w-24 text-right">Cost</div>
+                  <div className="w-8" />
+                </div>
                 {packagingFields.map((field, index) => (
                   <Card key={field.id} className="p-3">
-                    <div className="flex gap-2 items-start">
-                      <div className="flex-1">
-                        <Input
-                          placeholder="Item name"
-                          {...register(`packaging.${index}.name`)}
-                        />
+                    <div className="flex gap-3 items-center">
+                      <div className="flex-1 font-medium text-sm">
+                        {watch(`packaging.${index}.name`)}
                       </div>
                       <div className="w-20">
                         <Input
                           type="number"
                           placeholder="Qty"
+                          className="text-center"
                           {...register(`packaging.${index}.quantity`)}
                         />
                       </div>
-                      <div className="w-24">
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                            ₱
-                          </span>
-                          <Input
-                            type="number"
-                            placeholder="Cost"
-                            className="pl-6"
-                            value={watch(`packaging.${index}.unitCost`)}
-                            onChange={(e) =>
-                              setValue(
-                                `packaging.${index}.unitCost`,
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                          />
-                        </div>
+                      <div className="w-20 text-sm text-right">
+                        ₱{watch(`packaging.${index}.unitCost`).toFixed(2)}
                       </div>
-                      <div className="w-24 text-sm font-medium text-right flex items-center justify-end">
+                      <div className="w-24 text-sm font-medium text-right">
                         {formatCurrency(packagingCosts[index])}
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => removePackaging(index)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -421,17 +630,26 @@ export default function NewRecipe() {
                     </div>
                   </Card>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={handleAddPackaging}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Packaging
-                </Button>
+
+                {/* Total */}
+                <div className="flex gap-3 items-center px-3 text-sm">
+                  <div className="flex-1" />
+                  <div className="w-20" />
+                  <div className="w-20 text-right text-muted-foreground">Total:</div>
+                  <div className="w-24 text-right font-medium">
+                    {formatCurrency(recipeCost.totalOtherCost)}
+                  </div>
+                  <div className="w-8" />
+                </div>
               </div>
+            )}
+
+            {packagingFields.length === 0 && (
+              <Card className="p-6 text-center border-dashed">
+                <div className="text-muted-foreground text-xs">
+                  Search or create packaging above
+                </div>
+              </Card>
             )}
           </div>
 

@@ -1,8 +1,10 @@
 import {
   createIngredientsDb,
   createRecipesDb,
+  createPackagingDb,
   type IngredientDocument,
   type RecipeDocument,
+  type PackagingDocument,
   type PouchLike,
 } from "@costmate/core";
 import { db } from "./client";
@@ -14,6 +16,10 @@ export const ingredientsDb = createIngredientsDb(
 
 export const recipesDb = createRecipesDb(
   db as unknown as PouchLike<RecipeDocument>
+);
+
+export const packagingDb = createPackagingDb(
+  db as unknown as PouchLike<PackagingDocument>
 );
 
 // Re-export for convenience

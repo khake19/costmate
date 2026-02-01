@@ -21,3 +21,11 @@ export {
   type RecipesDb,
   type RecipeInput,
 } from './recipes';
+
+// Packaging DB
+export {
+  createPackagingDb,
+  type PackagingDb,
+  type PackagingDocument,
+  type PackagingInput,
+} from './packaging';

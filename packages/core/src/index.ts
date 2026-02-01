@@ -55,14 +55,18 @@ export type {
 export {
   createIngredientsDb,
   createRecipesDb,
+  createPackagingDb,
   type BaseDocument,
   type IngredientDocument,
   type RecipeDocument,
   type RecipeIngredientItem,
   type PackagingItemDocument,
+  type PackagingDocument,
   type PouchLike,
   type IngredientsDb,
   type RecipesDb,
+  type PackagingDb,
   type IngredientInput,
   type RecipeInput,
+  type PackagingInput,
 } from './db';
