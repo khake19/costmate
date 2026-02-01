@@ -1,58 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
+import { create } from "zustand";
 import type { RecipeDocument, RecipeInput } from "@costmate/core";
 import { recipesDb } from "../db";
+import { useEffect } from "react";
+
+interface RecipesState {
+  recipes: RecipeDocument[];
+  loading: boolean;
+  error: Error | null;
+  initialized: boolean;
+  fetchRecipes: () => Promise<void>;
+  addRecipe: (input: RecipeInput) => Promise<RecipeDocument>;
+  updateRecipe: (id: string, input: Partial<RecipeInput>) => Promise<RecipeDocument>;
+  removeRecipe: (id: string) => Promise<void>;
+}
+
+const useRecipesStore = create<RecipesState>((set, get) => ({
+  recipes: [],
+  loading: true,
+  error: null,
+  initialized: false,
+
+  fetchRecipes: async () => {
+    try {
+      set({ loading: true });
+      const data = await recipesDb.getAll();
+      set({ recipes: data, error: null, initialized: true });
+    } catch (err) {
+      set({ error: err instanceof Error ? err : new Error("Failed to fetch recipes") });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  addRecipe: async (input: RecipeInput) => {
+    const newRecipe = await recipesDb.add(input);
+    set((state) => ({ recipes: [...state.recipes, newRecipe] }));
+    return newRecipe;
+  },
+
+  updateRecipe: async (id: string, input: Partial<RecipeInput>) => {
+    const updated = await recipesDb.update(id, input);
+    set((state) => ({
+      recipes: state.recipes.map((recipe) => (recipe._id === id ? updated : recipe)),
+    }));
+    return updated;
+  },
+
+  removeRecipe: async (id: string) => {
+    await recipesDb.remove(id);
+    set((state) => ({
+      recipes: state.recipes.filter((recipe) => recipe._id !== id),
+    }));
+  },
+}));
 
 export function useRecipes() {
-  const [recipes, setRecipes] = useState<RecipeDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const store = useRecipesStore();
 
-  const fetchRecipes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await recipesDb.getAll();
-      setRecipes(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch recipes"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Fetch on first mount
   useEffect(() => {
-    fetchRecipes();
-  }, [fetchRecipes]);
-
-  const addRecipe = useCallback(async (input: RecipeInput) => {
-    const newRecipe = await recipesDb.add(input);
-    setRecipes((prev) => [...prev, newRecipe]);
-    return newRecipe;
-  }, []);
-
-  const updateRecipe = useCallback(
-    async (id: string, input: Partial<RecipeInput>) => {
-      const updated = await recipesDb.update(id, input);
-      setRecipes((prev) =>
-        prev.map((recipe) => (recipe._id === id ? updated : recipe))
-      );
-      return updated;
-    },
-    []
-  );
-
-  const removeRecipe = useCallback(async (id: string) => {
-    await recipesDb.remove(id);
-    setRecipes((prev) => prev.filter((recipe) => recipe._id !== id));
-  }, []);
+    if (!store.initialized) {
+      store.fetchRecipes();
+    }
+  }, [store.initialized, store.fetchRecipes]);
 
   return {
-    recipes,
-    loading,
-    error,
-    addRecipe,
-    updateRecipe,
-    removeRecipe,
-    refetch: fetchRecipes,
+    recipes: store.recipes,
+    loading: store.loading,
+    error: store.error,
+    addRecipe: store.addRecipe,
+    updateRecipe: store.updateRecipe,
+    removeRecipe: store.removeRecipe,
+    refetch: store.fetchRecipes,
   };
 }

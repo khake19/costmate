@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 import {
   calculateLineItemCost,
@@ -12,6 +12,7 @@ import {
   UNIT_CONFIG,
   type IngredientDocument,
   type PackagingDocument,
+  type RecipeDocument,
   type RecipeFormData,
   type Unit,
 } from "@costmate/core";
@@ -33,7 +34,7 @@ import {
 } from "@costmate/ui";
 import { ArrowLeft, Check, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useIngredients, usePackaging } from "../hooks";
+import { useIngredients, usePackaging, useRecipes } from "../hooks";
 
 const VAT_PERCENT = 0.12;
 
@@ -47,8 +48,11 @@ function getUnitCost(ingredient: IngredientDocument): number {
   return price / (qty * config.multiplier);
 }
 
-export default function NewRecipe() {
+export default function RecipeForm() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
+
   const { ingredients: availableIngredients, loading: ingredientsLoading } =
     useIngredients();
   const {
@@ -56,8 +60,11 @@ export default function NewRecipe() {
     addPackaging: addPackagingToDb,
     removePackaging: removePackagingFromDb,
   } = usePackaging();
+  const { recipes, addRecipe, updateRecipe, removeRecipe } = useRecipes();
 
   const deletedPackagingRef = useRef<PackagingDocument | null>(null);
+  const deletedRecipeRef = useRef<RecipeDocument | null>(null);
+  const [initialLoading, setInitialLoading] = useState(isEditing);
 
   const [ingredientSearchOpen, setIngredientSearchOpen] = useState(false);
   const [packagingSearchOpen, setPackagingSearchOpen] = useState(false);
@@ -71,6 +78,7 @@ export default function NewRecipe() {
     watch,
     setValue,
     control,
+    reset,
     formState: { errors },
   } = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
@@ -84,6 +92,25 @@ export default function NewRecipe() {
       isVatRegistered: true,
     },
   });
+
+  // Load existing recipe data when editing
+  useEffect(() => {
+    if (isEditing && id && recipes.length > 0) {
+      const recipe = recipes.find((r) => r._id === id);
+      if (recipe) {
+        reset({
+          name: recipe.name,
+          ingredients: recipe.ingredients,
+          packaging: recipe.packaging,
+          targetMarginPercent: recipe.targetMarginPercent,
+          batchSize: recipe.batchSize,
+          ordersPerMonth: recipe.ordersPerMonth,
+          isVatRegistered: recipe.isVatRegistered,
+        });
+      }
+      setInitialLoading(false);
+    }
+  }, [isEditing, id, recipes, reset]);
 
   const {
     fields: ingredientFields,
@@ -138,9 +165,50 @@ export default function NewRecipe() {
     return `₱${value.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const onSubmit = (data: RecipeFormData) => {
-    console.log("Recipe saved:", data);
-    navigate("/");
+  const onSubmit = async (data: RecipeFormData) => {
+    try {
+      if (isEditing && id) {
+        await updateRecipe(id, data);
+        toast.success(`"${data.name}" updated`);
+      } else {
+        await addRecipe(data);
+        toast.success(`"${data.name}" saved`);
+      }
+      navigate("/");
+    } catch {
+      toast.error(`Failed to ${isEditing ? "update" : "save"} recipe`);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isEditing || !id) return;
+
+    const recipe = recipes.find((r) => r._id === id);
+    if (!recipe) return;
+
+    deletedRecipeRef.current = recipe;
+
+    try {
+      await removeRecipe(id);
+      navigate("/");
+
+      toast(`"${recipe.name}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            if (deletedRecipeRef.current) {
+              const { name, ingredients, packaging, targetMarginPercent, batchSize, ordersPerMonth, isVatRegistered } =
+                deletedRecipeRef.current;
+              await addRecipe({ name, ingredients, packaging, targetMarginPercent, batchSize, ordersPerMonth, isVatRegistered });
+              deletedRecipeRef.current = null;
+            }
+          },
+        },
+        duration: 5000,
+      });
+    } catch {
+      toast.error("Failed to delete recipe");
+    }
   };
 
   const handleAddIngredient = (ingredient: IngredientDocument) => {
@@ -250,6 +318,14 @@ export default function NewRecipe() {
       (pkg) => pkg.name.toLowerCase() === packagingSearch.toLowerCase()
     );
 
+  if (initialLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-muted-foreground">Loading recipe...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Page Header */}
@@ -263,8 +339,21 @@ export default function NewRecipe() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Cancel
         </Button>
-        <span className="font-bold flex-1 text-center">New Recipe</span>
-        <div className="w-20 flex justify-end">
+        <span className="font-bold flex-1 text-center">
+          {isEditing ? "Edit Recipe" : "New Recipe"}
+        </span>
+        <div className="flex gap-2 justify-end">
+          {isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          )}
           <Button size="sm" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
