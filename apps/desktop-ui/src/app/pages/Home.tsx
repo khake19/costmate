@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Button, Input, Card } from "@costmate/ui";
-import { ImageIcon, Plus, Search } from "lucide-react";
+import { Button, Input, Card, Popover, PopoverContent, PopoverTrigger } from "@costmate/ui";
+import { Download, ImageIcon, Plus, Search } from "lucide-react";
+import { useIngredients } from "../hooks";
+import { exportToExcel, exportToCSV, exportToPDF } from "../utils/export";
 import {
   calculateLineItemCost,
   calculatePricing,
@@ -57,6 +59,15 @@ const VAT_PERCENT = 0.12;
 export default function Home() {
   const navigate = useNavigate();
   const { recipes, loading, error, getImage, hasImage } = useRecipes();
+  const { ingredients } = useIngredients();
+  const [exportOpen, setExportOpen] = useState(false);
+
+  const handleExport = (format: "excel" | "csv" | "pdf") => {
+    setExportOpen(false);
+    if (format === "excel") exportToExcel(recipes, ingredients);
+    else if (format === "csv") exportToCSV(recipes, ingredients);
+    else if (format === "pdf") exportToPDF(recipes, ingredients);
+  };
 
   const recipesWithPricing = recipes.map((recipe) => {
     const ingredientCosts = recipe.ingredients.map((ing) =>
@@ -129,10 +140,40 @@ export default function Home() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search recipes..." className="pl-9" />
           </div>
-          <Button onClick={() => navigate("/recipe/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Recipe
-          </Button>
+          <div className="flex gap-2">
+            <Popover open={exportOpen} onOpenChange={setExportOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" disabled={recipes.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-40 p-1" align="end">
+                <button
+                  onClick={() => handleExport("excel")}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+                >
+                  Excel (.xlsx)
+                </button>
+                <button
+                  onClick={() => handleExport("csv")}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExport("pdf")}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+                >
+                  PDF
+                </button>
+              </PopoverContent>
+            </Popover>
+            <Button onClick={() => navigate("/recipe/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Recipe
+            </Button>
+          </div>
         </div>
 
         {/* Loading State */}

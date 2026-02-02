@@ -5,10 +5,14 @@
   "dependencies": {
     "@costmate/core": "workspace:*",
     "@costmate/ui": "workspace:*",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "pouchdb-browser": "^9.0.0",
-    "react-router-dom": "^7.13.0"
+    "react-router-dom": "^7.13.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/jspdf": "^2.0.0",
     "@types/pouchdb-browser": "^6.1.5"
   }
 }

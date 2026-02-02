@@ -1,7 +1,9 @@
 import PouchDB from "pouchdb-browser";
 
 // Single database for all documents (using type prefixes for separation)
-export const db = new PouchDB("costmate");
+export const db = new PouchDB("costmate", {
+  auto_compaction: true, // Automatically compact after every write
+});
 
 // Expose to window for debugging (dev only)
 if (import.meta.env.DEV) {
