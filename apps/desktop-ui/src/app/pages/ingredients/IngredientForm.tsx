@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -38,22 +39,29 @@ export default function IngredientForm({
 }: IngredientFormProps) {
   const isEditing = !!ingredient;
 
+  const defaultValues = ingredient ?? {
+    name: "",
+    category: "Meat",
+    quantity: "1",
+    unit: "kg",
+    price: "",
+  };
+
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<IngredientFormData>({
     resolver: zodResolver(ingredientSchema),
-    defaultValues: ingredient ?? {
-      name: "",
-      category: "Meat",
-      quantity: "1",
-      unit: "kg",
-      price: "",
-    },
+    defaultValues,
   });
+
+  useEffect(() => {
+    reset(defaultValues);
+  }, [ingredient]);
 
   const quantity = watch("quantity");
   const unit = watch("unit");
