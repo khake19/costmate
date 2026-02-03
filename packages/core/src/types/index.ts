@@ -1,6 +1,6 @@
-import type { CATEGORIES, UNITS } from '../constants';
+import type { UNITS } from '../constants';
 
-export type Category = (typeof CATEGORIES)[number];
+export type Category = string;
 export type Unit = (typeof UNITS)[number];
 
 export interface Ingredient {

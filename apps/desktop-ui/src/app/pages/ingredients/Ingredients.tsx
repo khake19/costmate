@@ -1,35 +1,58 @@
 import {
-  CATEGORIES,
   calculatePricePerUnit,
   formatQuantityUnit,
+  type CategoryDocument,
   type IngredientDocument,
   type IngredientInput,
   type Unit,
 } from "@costmate/core";
 import { Button, Card, Input, cn } from "@costmate/ui";
 import { Plus, Search } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useIngredients } from "../../hooks";
+import { useCategories, useIngredients } from "../../hooks";
 import IngredientForm from "./IngredientForm";
-
-const filterCategories = ["All", ...CATEGORIES] as const;
 
 export default function Ingredients() {
   const {
     ingredients,
-    loading,
-    error,
+    loading: ingredientsLoading,
+    error: ingredientsError,
     addIngredient,
     updateIngredient,
     removeIngredient,
   } = useIngredients();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    addCategory,
+    removeCategory,
+  } = useCategories();
 
   const [showPanel, setShowPanel] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [editingIngredient, setEditingIngredient] =
     useState<IngredientDocument | null>(null);
   const deletedIngredientRef = useRef<IngredientDocument | null>(null);
+  const deletedCategoryRef = useRef<CategoryDocument | null>(null);
+
+  const categoryItems = useMemo(
+    () => categories.map((cat) => ({
+      id: cat._id,
+      name: cat.name,
+      isDefault: cat.isDefault,
+    })),
+    [categories]
+  );
+
+  const filterCategories = useMemo(
+    () => ["All", ...categories.map((cat) => cat.name)],
+    [categories]
+  );
+
+  const loading = ingredientsLoading || categoriesLoading;
+  const error = ingredientsError;
 
   const handleAdd = () => {
     setEditingIngredient(null);
@@ -204,6 +227,37 @@ export default function Ingredients() {
                   }
                 : undefined
             }
+            availableCategories={categoryItems}
+            onCreateCategory={async (name) => {
+              await addCategory({ name });
+            }}
+            onDeleteCategory={async (id, name) => {
+              const categoryDoc = categories.find((c) => c._id === id);
+              if (categoryDoc) {
+                deletedCategoryRef.current = categoryDoc;
+              }
+
+              await removeCategory(id);
+
+              // Reset filter if deleted category was active
+              if (activeCategory === name) {
+                setActiveCategory("All");
+              }
+
+              toast(`"${name}" deleted`, {
+                action: {
+                  label: "Undo",
+                  onClick: async () => {
+                    if (deletedCategoryRef.current) {
+                      const { name, isDefault } = deletedCategoryRef.current;
+                      await addCategory({ name, isDefault });
+                      deletedCategoryRef.current = null;
+                    }
+                  },
+                },
+                duration: 5000,
+              });
+            }}
             onSave={handleSave}
             onDelete={editingIngredient ? handleDelete : undefined}
             onCancel={handleCancel}

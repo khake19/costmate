@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { CATEGORIES, UNITS } from '../constants';
+import { UNITS } from '../constants';
 
 export const ingredientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  category: z.enum(CATEGORIES),
+  category: z.string().min(1, 'Category is required'),
   quantity: z
     .string()
     .min(1, 'Quantity is required')

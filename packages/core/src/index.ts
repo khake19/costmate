@@ -53,19 +53,23 @@ export type {
 
 // Database
 export {
+  createCategoriesDb,
   createIngredientsDb,
   createRecipesDb,
   createPackagingDb,
   type BaseDocument,
+  type CategoryDocument,
   type IngredientDocument,
   type RecipeDocument,
   type RecipeIngredientItem,
   type PackagingItemDocument,
   type PackagingDocument,
   type PouchLike,
+  type CategoriesDb,
   type IngredientsDb,
   type RecipesDb,
   type PackagingDb,
+  type CategoryInput,
   type IngredientInput,
   type RecipeInput,
   type PackagingInput,

@@ -1,4 +1,4 @@
-import type { Category, Unit } from '../types';
+import type { Unit } from '../types';
 
 // Base document type for PouchDB
 export interface BaseDocument {
@@ -8,11 +8,18 @@ export interface BaseDocument {
   updatedAt: string;
 }
 
+// Category document
+export interface CategoryDocument extends BaseDocument {
+  type: 'category';
+  name: string;
+  isDefault?: boolean;
+}
+
 // Ingredient document
 export interface IngredientDocument extends BaseDocument {
   type: 'ingredient';
   name: string;
-  category: Category;
+  category: string;
   quantity: string;
   unit: Unit;
   price: string;

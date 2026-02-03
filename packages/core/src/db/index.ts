@@ -1,12 +1,20 @@
 // Types
 export type {
   BaseDocument,
+  CategoryDocument,
   IngredientDocument,
   RecipeDocument,
   RecipeIngredientItem,
   PackagingItemDocument,
   PouchLike,
 } from './types';
+
+// Categories DB
+export {
+  createCategoriesDb,
+  type CategoriesDb,
+  type CategoryInput,
+} from './categories';
 
 // Ingredients DB
 export {
