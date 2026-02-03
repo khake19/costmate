@@ -1,0 +1,20 @@
+{
+  "appId": "com.costmate.app",
+  "productName": "Costmate",
+  "directories": {
+    "output": "../../dist/executables"
+  },
+  "files": [
+    "**/*"
+  ],
+  "mac": {
+    "target": "dmg",
+    "identity": null
+  },
+  "win": {
+    "target": "nsis"
+  },
+  "linux": {
+    "target": "deb"
+  }
+}

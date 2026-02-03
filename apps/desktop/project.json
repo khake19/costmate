@@ -44,7 +44,10 @@
         "frontendProject": "@costmate/desktop-ui",
         "sourcePath": "dist/apps",
         "outputPath": "dist/packages",
-        "prepackageOnly": true
+        "prepackageOnly": true,
+        "mac": {
+          "identity": null
+        }
       }
     },
     "make": {
@@ -53,7 +56,10 @@
         "name": "desktop",
         "frontendProject": "@costmate/desktop-ui",
         "sourcePath": "dist/apps",
-        "outputPath": "dist/executables"
+        "outputPath": "dist/executables",
+        "mac": {
+          "identity": null
+        }
       }
     },
     "lint": {
