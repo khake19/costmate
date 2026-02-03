@@ -43,7 +43,7 @@ import {
 } from "@costmate/ui";
 import { ArrowLeft, Check, ImagePlus, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useIngredients, usePackaging, useRecipes } from "../hooks";
+import { useIngredients, usePackaging, useRecipes, useKeyboardShortcuts, formatShortcut } from "../hooks";
 
 const VAT_PERCENT = 0.12;
 
@@ -104,6 +104,33 @@ export default function RecipeForm() {
       ordersPerMonth: "100",
       isVatRegistered: true,
     },
+  });
+
+  // Store handleSubmit in a ref so the shortcut can access it
+  const submitFormRef = useRef<() => void>();
+  submitFormRef.current = handleSubmit(async (data) => {
+    try {
+      let recipeId = id;
+      if (isEditing && id) {
+        await updateRecipe(id, data);
+        toast.success(`"${data.name}" updated`);
+      } else {
+        const newRecipe = await addRecipe(data);
+        recipeId = newRecipe._id;
+        toast.success(`"${data.name}" saved`);
+      }
+      if (pendingImage && recipeId) {
+        await addImage(recipeId, pendingImage);
+      }
+      navigate("/");
+    } catch {
+      toast.error(`Failed to ${isEditing ? "update" : "save"} recipe`);
+    }
+  });
+
+  useKeyboardShortcuts({
+    onSave: () => submitFormRef.current?.(),
+    onEscape: () => navigate("/"),
   });
 
   // Load existing recipe data when editing
@@ -214,26 +241,6 @@ export default function RecipeForm() {
     }
   };
 
-  const onSubmit = async (data: RecipeFormData) => {
-    try {
-      let recipeId = id;
-      if (isEditing && id) {
-        await updateRecipe(id, data);
-        toast.success(`"${data.name}" updated`);
-      } else {
-        const newRecipe = await addRecipe(data);
-        recipeId = newRecipe._id;
-        toast.success(`"${data.name}" saved`);
-      }
-      // Save image if there's a pending one
-      if (pendingImage && recipeId) {
-        await addImage(recipeId, pendingImage);
-      }
-      navigate("/");
-    } catch {
-      toast.error(`Failed to ${isEditing ? "update" : "save"} recipe`);
-    }
-  };
 
   const handleDelete = async () => {
     if (!isEditing || !id) return;
@@ -389,10 +396,13 @@ export default function RecipeForm() {
           variant="ghost"
           size="sm"
           onClick={() => navigate("/")}
-          className="w-20"
+          title="Cancel (Esc)"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Cancel
+          <kbd className="ml-1 px-1 py-0.5 text-[10px] bg-muted rounded border font-mono text-muted-foreground">
+            Esc
+          </kbd>
         </Button>
         <span className="font-bold flex-1 text-center">
           {isEditing ? "Edit Recipe" : "New Recipe"}
@@ -430,8 +440,11 @@ export default function RecipeForm() {
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button size="sm" onClick={handleSubmit(onSubmit)}>
+          <Button size="sm" onClick={() => submitFormRef.current?.()} title={`Save (${formatShortcut('S', { ctrl: true })})`}>
             Save
+            <kbd className="ml-2 px-1.5 py-0.5 text-[10px] bg-primary-foreground/20 rounded font-mono">
+              {formatShortcut('S', { ctrl: true })}
+            </kbd>
           </Button>
         </div>
       </div>

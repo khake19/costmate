@@ -19,7 +19,7 @@ import {
 import { Plus, Search } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useCategories, useIngredients } from "../../hooks";
+import { useCategories, useIngredients, useKeyboardShortcuts, formatShortcut } from "../../hooks";
 import IngredientForm from "./IngredientForm";
 
 export default function Ingredients() {
@@ -46,6 +46,21 @@ export default function Ingredients() {
     useState<IngredientDocument | null>(null);
   const deletedIngredientRef = useRef<IngredientDocument | null>(null);
   const deletedCategoryRef = useRef<CategoryDocument | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcuts({
+    onFocusSearch: () => searchInputRef.current?.focus(),
+    onNew: () => {
+      setEditingIngredient(null);
+      setShowPanel(true);
+    },
+    onEscape: () => {
+      if (showPanel) {
+        setShowPanel(false);
+        setEditingIngredient(null);
+      }
+    },
+  });
 
   const categoryItems = useMemo(
     () => categories.map((cat) => ({
@@ -163,11 +178,15 @@ export default function Ingredients() {
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               placeholder="Search ingredients..."
-              className="pl-9"
+              className="pl-9 pr-14"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] bg-muted rounded border font-mono text-muted-foreground">
+              {formatShortcut('K', { ctrl: true })}
+            </kbd>
           </div>
           <Select value={activeCategory} onValueChange={setActiveCategory}>
             <SelectTrigger className="w-48">
@@ -192,9 +211,12 @@ export default function Ingredients() {
             </SelectContent>
           </Select>
           <div className="flex-1" />
-          <Button onClick={handleAdd}>
+          <Button onClick={handleAdd} title={`Add New (${formatShortcut('N', { ctrl: true })})`}>
             <Plus className="h-4 w-4 mr-2" />
             Add New
+            <kbd className="ml-2 px-1.5 py-0.5 text-[10px] bg-primary-foreground/20 rounded font-mono">
+              {formatShortcut('N', { ctrl: true })}
+            </kbd>
           </Button>
         </div>
 

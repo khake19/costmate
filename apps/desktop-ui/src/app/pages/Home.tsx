@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Card, Popover, PopoverContent, PopoverTrigger } from "@costmate/ui";
 import { Download, ImageIcon, Plus, Search } from "lucide-react";
-import { useIngredients } from "../hooks";
+import { useIngredients, useKeyboardShortcuts, formatShortcut } from "../hooks";
 import { exportToExcel, exportToCSV, exportToPDF } from "../utils/export";
 import {
   calculateLineItemCost,
@@ -62,6 +62,12 @@ export default function Home() {
   const { ingredients } = useIngredients();
   const [exportOpen, setExportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcuts({
+    onFocusSearch: () => searchInputRef.current?.focus(),
+    onNew: () => navigate("/recipe/new"),
+  });
 
   const handleExport = (format: "excel" | "csv" | "pdf") => {
     setExportOpen(false);
@@ -146,11 +152,15 @@ export default function Home() {
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               placeholder="Search recipes..."
-              className="pl-9"
+              className="pl-9 pr-14"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] bg-muted rounded border font-mono text-muted-foreground">
+              {formatShortcut('K', { ctrl: true })}
+            </kbd>
           </div>
           <div className="flex gap-2">
             <Popover open={exportOpen} onOpenChange={setExportOpen}>
@@ -181,9 +191,12 @@ export default function Home() {
                 </button>
               </PopoverContent>
             </Popover>
-            <Button onClick={() => navigate("/recipe/new")}>
+            <Button onClick={() => navigate("/recipe/new")} title={`New Recipe (${formatShortcut('N', { ctrl: true })})`}>
               <Plus className="h-4 w-4 mr-2" />
               New Recipe
+              <kbd className="ml-2 px-1.5 py-0.5 text-[10px] bg-primary-foreground/20 rounded font-mono">
+                {formatShortcut('N', { ctrl: true })}
+              </kbd>
             </Button>
           </div>
         </div>

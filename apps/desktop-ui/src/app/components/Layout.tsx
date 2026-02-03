@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Button, cn } from '@costmate/ui';
-import { Settings, Minus, Square, X } from 'lucide-react';
+import { Keyboard, Minus, Square, X } from 'lucide-react';
+import { useKeyboardShortcuts, formatShortcut } from '../hooks';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 
 declare global {
   interface Window {
@@ -15,10 +18,15 @@ declare global {
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+
+  const { shortcuts, isMac } = useKeyboardShortcuts({
+    onOpenShortcutsModal: () => setShortcutsModalOpen(true),
+  });
 
   const tabs = [
-    { name: 'Recipes', path: '/' },
-    { name: 'Ingredients', path: '/ingredients' },
+    { name: 'Recipes', path: '/', shortcut: '1' },
+    { name: 'Ingredients', path: '/ingredients', shortcut: '2' },
   ];
 
   // Check if we're on a sub-page (like /recipe/new)
@@ -36,8 +44,14 @@ export default function Layout() {
           className="flex gap-2 items-center"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
-          <Button variant="ghost" size="icon" className="h-7 w-7">
-            <Settings className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setShortcutsModalOpen(true)}
+            title={`Keyboard shortcuts (${formatShortcut('/', { ctrl: true })})`}
+          >
+            <Keyboard className="h-4 w-4" />
           </Button>
           <div className="flex gap-1">
             <Button
@@ -82,7 +96,12 @@ export default function Layout() {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              {tab.name}
+              <span className="flex items-center gap-2">
+                {tab.name}
+                <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border font-mono text-muted-foreground">
+                  {formatShortcut(tab.shortcut, { ctrl: true })}
+                </kbd>
+              </span>
               {location.pathname === tab.path && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
               )}
@@ -95,6 +114,14 @@ export default function Layout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
       </div>
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        open={shortcutsModalOpen}
+        onOpenChange={setShortcutsModalOpen}
+        shortcuts={shortcuts}
+        isMac={isMac}
+      />
     </div>
   );
 }
