@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Input, Card, Popover, PopoverContent, PopoverTrigger } from "@costmate/ui";
 import { Download, ImageIcon, Plus, Search } from "lucide-react";
 import { useIngredients } from "../hooks";
@@ -61,6 +61,7 @@ export default function Home() {
   const { recipes, loading, error, getImage, hasImage } = useRecipes();
   const { ingredients } = useIngredients();
   const [exportOpen, setExportOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleExport = (format: "excel" | "csv" | "pdf") => {
     setExportOpen(false);
@@ -100,6 +101,12 @@ export default function Home() {
     };
   });
 
+  const filteredRecipes = useMemo(() => {
+    return recipesWithPricing.filter((recipe) =>
+      recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [recipesWithPricing, searchQuery]);
+
   const totals = recipesWithPricing.reduce(
     (acc, recipe) => {
       const orders = parseFloat(recipe.ordersPerMonth) || 0;
@@ -138,7 +145,12 @@ export default function Home() {
         <div className="flex justify-between items-center mb-4">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search recipes..." className="pl-9" />
+            <Input
+              placeholder="Search recipes..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <div className="flex gap-2">
             <Popover open={exportOpen} onOpenChange={setExportOpen}>
@@ -193,7 +205,7 @@ export default function Home() {
         {/* Recipe Cards */}
         {!loading && (
           <div className="space-y-3">
-            {recipesWithPricing.map((recipe) => (
+            {filteredRecipes.map((recipe) => (
               <Card
                 key={recipe._id}
                 onClick={() => navigate(`/recipe/${recipe._id}`)}

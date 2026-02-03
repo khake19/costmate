@@ -41,6 +41,7 @@ export default function Ingredients() {
 
   const [showPanel, setShowPanel] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingIngredient, setEditingIngredient] =
     useState<IngredientDocument | null>(null);
   const deletedIngredientRef = useRef<IngredientDocument | null>(null);
@@ -59,6 +60,14 @@ export default function Ingredients() {
     () => ["All", ...categories.map((cat) => cat.name)],
     [categories]
   );
+
+  const filteredIngredients = useMemo(() => {
+    return ingredients.filter((ing) => {
+      const matchesCategory = activeCategory === "All" || ing.category === activeCategory;
+      const matchesSearch = ing.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [ingredients, activeCategory, searchQuery]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { All: ingredients.length };
@@ -153,7 +162,12 @@ export default function Ingredients() {
         <div className="flex items-center gap-3 mb-4">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search ingredients..." className="pl-9" />
+            <Input
+              placeholder="Search ingredients..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <Select value={activeCategory} onValueChange={setActiveCategory}>
             <SelectTrigger className="w-48">
@@ -186,12 +200,7 @@ export default function Ingredients() {
 
         {/* Ingredients List */}
         <div className="space-y-2">
-          {ingredients
-            .filter(
-              (ing) =>
-                activeCategory === "All" || ing.category === activeCategory
-            )
-            .map((ingredient) => (
+          {filteredIngredients.map((ingredient) => (
               <Card
                 key={ingredient._id}
                 onClick={() => handleEdit(ingredient)}
