@@ -6,7 +6,16 @@ import {
   type IngredientInput,
   type Unit,
 } from "@costmate/core";
-import { Button, Card, Input, cn } from "@costmate/ui";
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  cn,
+} from "@costmate/ui";
 import { Plus, Search } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -50,6 +59,14 @@ export default function Ingredients() {
     () => ["All", ...categories.map((cat) => cat.name)],
     [categories]
   );
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: ingredients.length };
+    for (const ing of ingredients) {
+      counts[ing.category] = (counts[ing.category] || 0) + 1;
+    }
+    return counts;
+  }, [ingredients]);
 
   const loading = ingredientsLoading || categoriesLoading;
   const error = ingredientsError;
@@ -132,30 +149,39 @@ export default function Ingredients() {
     <div className="flex flex-1 overflow-hidden">
       {/* Main Content */}
       <div className="flex-1 p-4 overflow-auto">
-        {/* Search + Add */}
-        <div className="flex justify-between items-center mb-4">
+        {/* Search + Category Filter + Add */}
+        <div className="flex items-center gap-3 mb-4">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search ingredients..." className="pl-9" />
           </div>
+          <Select value={activeCategory} onValueChange={setActiveCategory}>
+            <SelectTrigger className="w-48">
+              <div className="flex items-center justify-between w-full">
+                <span>{activeCategory}</span>
+                <span className="text-muted-foreground">
+                  {categoryCounts[activeCategory] || 0}
+                </span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {filterCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  <div className="flex items-center justify-between w-full">
+                    <span>{cat}</span>
+                    <span className="text-muted-foreground">
+                      {categoryCounts[cat] || 0}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex-1" />
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add New
           </Button>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex gap-2 mb-4">
-          {filterCategories.map((cat) => (
-            <Button
-              key={cat}
-              variant={activeCategory === cat ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat}
-            </Button>
-          ))}
         </div>
 
         {/* Ingredients List */}

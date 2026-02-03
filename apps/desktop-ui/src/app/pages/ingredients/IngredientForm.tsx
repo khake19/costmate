@@ -167,12 +167,12 @@ export default function IngredientForm({
                         className="w-full justify-start"
                         onClick={async () => {
                           const newCategoryName = categorySearch;
-                          setCategorySearch("");
-                          setCategoryOpen(false);
                           if (onCreateCategory) {
                             await onCreateCategory(newCategoryName);
                           }
                           setValue("category", newCategoryName, { shouldValidate: true });
+                          setCategorySearch("");
+                          setCategoryOpen(false);
                         }}
                       >
                         <Plus className="mr-2 h-4 w-4" />
