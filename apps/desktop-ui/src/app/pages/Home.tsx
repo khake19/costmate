@@ -4,6 +4,7 @@ import { Button, Input, Card, Popover, PopoverContent, PopoverTrigger } from "@c
 import { Download, ImageIcon, Plus, Search } from "lucide-react";
 import { useIngredients, useKeyboardShortcuts, formatShortcut } from "../hooks";
 import { exportToExcel, exportToCSV, exportToPDF } from "../utils/export";
+import { toast } from "sonner";
 import {
   calculateLineItemCost,
   calculatePricing,
@@ -71,9 +72,16 @@ export default function Home() {
 
   const handleExport = (format: "excel" | "csv" | "pdf") => {
     setExportOpen(false);
-    if (format === "excel") exportToExcel(recipes, ingredients);
-    else if (format === "csv") exportToCSV(recipes, ingredients);
-    else if (format === "pdf") exportToPDF(recipes, ingredients);
+    if (format === "excel") {
+      exportToExcel(recipes, ingredients);
+      toast.success("Excel export started");
+    } else if (format === "csv") {
+      exportToCSV(recipes, ingredients);
+      toast.success("CSV export started");
+    } else if (format === "pdf") {
+      exportToPDF(recipes, ingredients);
+      toast.success("PDF export started");
+    }
   };
 
   const recipesWithPricing = recipes.map((recipe) => {

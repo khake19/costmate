@@ -51,6 +51,74 @@ pnpm nxe:serve:backend
 pnpm nxe:serve:frontend
 ```
 
+### Building and Packaging
+
+#### Build for Development
+
+Package the app without creating a distributable:
+
+```sh
+pnpm nxe:package:app
+```
+
+#### Create Distributable
+
+Build and package the app for your current platform:
+
+```sh
+pnpm nxe:make:app
+```
+
+#### Build for Specific Platforms
+
+To build for specific platforms, use the `--platform` flag:
+
+```sh
+# Build for Windows
+pnpm nxe:make:app --platform=windows
+
+# Build for macOS
+pnpm nxe:make:app --platform=mac
+
+# Build for Linux
+pnpm nxe:make:app --platform=linux
+```
+
+Valid platform values: `windows`, `mac`, `linux`
+
+Output will be in `dist/executables/`
+
+#### Code Signing
+
+Code signing is **disabled** by default for easier local development. This means:
+
+**macOS:**
+- No keychain popup during builds
+- Users will see "This app is from an unidentified developer" warning
+- To open: Right-click → "Open" or System Settings → Privacy & Security → "Open Anyway"
+
+**Windows:**
+- Users will see Windows Defender SmartScreen warning
+- To open: Click "More info" → "Run anyway"
+
+**To enable code signing for distribution:**
+
+1. **macOS**: Get an Apple Developer account ($99/year) and update `apps/desktop/project.json`:
+   ```json
+   "mac": {
+     "identity": "Developer ID Application: Your Name"
+   }
+   ```
+
+2. **Windows**: Get a code signing certificate and update `apps/desktop/electron-builder.json`:
+   ```json
+   "win": {
+     "target": "nsis",
+     "certificateFile": "path/to/cert.pfx",
+     "certificatePassword": "password"
+   }
+   ```
+
 ## Finish your CI setup
 
 [Click here to finish setting up your workspace!](https://cloud.nx.app/connect/7eJ9Be6l7v)
