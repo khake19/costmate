@@ -9,12 +9,15 @@
   ],
   "mac": {
     "target": "dmg",
-    "identity": null
+    "identity": null,
+    "icon": "apps/desktop/assets/icon.icns"
   },
   "win": {
-    "target": "nsis"
+    "target": "nsis",
+    "icon": "apps/desktop/assets/icon.ico"
   },
   "linux": {
-    "target": "deb"
+    "target": "deb",
+    "icon": "apps/desktop/assets/icon-1024.png"
   }
 }

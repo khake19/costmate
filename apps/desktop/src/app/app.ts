@@ -54,6 +54,7 @@ export default class App {
             show: false,
             frame: false,
             titleBarStyle: 'hidden',
+            icon: join(__dirname, '..', 'assets', 'icon-1024.png'),
             webPreferences: {
                 contextIsolation: true,
                 backgroundThrottling: false,
