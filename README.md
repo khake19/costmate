@@ -119,6 +119,70 @@ Code signing is **disabled** by default for easier local development. This means
    }
    ```
 
+## License Key Activation
+
+The app uses an offline Ed25519 cryptographic license key system. Users must activate with a valid license key before they can use the app. No server is needed — verification is done locally using an embedded public key.
+
+### How It Works
+
+1. You generate a license key using your private key (kept secret)
+2. You send the key to the buyer
+3. The buyer enters the key in the app's activation screen
+4. The app verifies the signature using the embedded public key
+5. Once activated, the key is saved locally — no need to re-enter on future launches
+
+### Setup (One-Time)
+
+Generate your Ed25519 key pair:
+
+```sh
+npx ts-node tools/generate-keypair.ts
+```
+
+This will:
+- Save the private key to `tools/.private-key` (gitignored — keep this secret)
+- Print the public key (already embedded in the app at `apps/desktop/src/app/events/electron.events.ts`)
+
+> **Important:** If you regenerate the key pair, update the `PUBLIC_KEY_PEM` constant in `electron.events.ts` with the new public key. All previously issued license keys will become invalid.
+
+### Generating License Keys
+
+Generate a license key for a buyer:
+
+```sh
+npx ts-node tools/generate-license.ts "buyer@email.com"
+```
+
+Output:
+```
+License key for "buyer@email.com":
+
+COSTMATE-dGVzdEBleGFtcGxlLmNvbQ==.QBBqMY...
+```
+
+Send the full `COSTMATE-...` string to the buyer.
+
+### License Storage
+
+Activated licenses are saved to Electron's user data directory:
+
+| Platform | Path |
+|----------|------|
+| macOS | `~/Library/Application Support/<app-name>/license.json` |
+| Windows | `%APPDATA%/<app-name>/license.json` |
+| Linux | `~/.config/<app-name>/license.json` |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `tools/generate-keypair.ts` | One-time key pair generation script |
+| `tools/generate-license.ts` | CLI to generate license keys for buyers |
+| `tools/.private-key` | Your private signing key (gitignored) |
+| `apps/desktop/src/app/events/electron.events.ts` | License verification IPC handlers + embedded public key |
+| `apps/desktop/src/app/api/main.preload.ts` | Exposes license methods to the renderer |
+| `apps/desktop-ui/src/app/pages/Activation.tsx` | Activation screen UI |
+
 ## Finish your CI setup
 
 [Click here to finish setting up your workspace!](https://cloud.nx.app/connect/7eJ9Be6l7v)

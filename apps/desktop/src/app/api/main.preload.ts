@@ -5,5 +5,8 @@ contextBridge.exposeInMainWorld('electron', {
     platform: process.platform,
     windowMinimize: () => ipcRenderer.send('window-minimize'),
     windowMaximize: () => ipcRenderer.send('window-maximize'),
-    windowClose: () => ipcRenderer.send('window-close')
+    windowClose: () => ipcRenderer.send('window-close'),
+    validateLicense: (key: string) => ipcRenderer.invoke('validate-license', key),
+    checkLicense: () => ipcRenderer.invoke('check-license'),
+    getLicenseInfo: () => ipcRenderer.invoke('get-license-info'),
 });

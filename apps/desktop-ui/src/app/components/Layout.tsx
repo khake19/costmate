@@ -11,6 +11,9 @@ declare global {
       windowMinimize: () => void;
       windowMaximize: () => void;
       windowClose: () => void;
+      validateLicense: (key: string) => Promise<{ valid: boolean; buyerInfo?: string }>;
+      checkLicense: () => Promise<{ activated: boolean; buyerInfo?: string }>;
+      getLicenseInfo: () => Promise<{ buyerInfo: string } | null>;
     };
   }
 }
