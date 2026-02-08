@@ -13,7 +13,12 @@
     "icon": "apps/desktop/assets/icon.icns"
   },
   "win": {
-    "target": "nsis",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
     "icon": "apps/desktop/assets/icon.ico"
   },
   "linux": {

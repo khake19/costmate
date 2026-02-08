@@ -60,6 +60,12 @@
         "mac": {
           "identity": null
         }
+      },
+      "configurations": {
+        "winx64": {
+          "platform": "windows",
+          "arch": "x64"
+        }
       }
     },
     "lint": {

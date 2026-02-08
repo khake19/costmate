@@ -74,19 +74,33 @@ pnpm nxe:make:app
 To build for specific platforms, use the `--platform` flag:
 
 ```sh
-# Build for Windows
-pnpm nxe:make:app --platform=windows
+# Build for Windows (x64 — most Windows users)
+npx nx make desktop --platform=windows --arch=x64
 
-# Build for macOS
-pnpm nxe:make:app --platform=mac
+# Build for macOS (arm64 — Apple Silicon, M1/M2/M3/M4)
+npx nx make desktop --platform=mac
+
+# Build for macOS (universal — Apple Silicon + Intel)
+npx nx make desktop --platform=mac --arch=universal
 
 # Build for Linux
-pnpm nxe:make:app --platform=linux
+npx nx make desktop --platform=linux
 ```
 
 Valid platform values: `windows`, `mac`, `linux`
 
 Output will be in `dist/executables/`
+
+#### GitHub Releases
+
+Upload these files from `dist/executables/`:
+
+| File | For |
+|------|-----|
+| `Costmate Setup x.x.x.exe` (x64) | Windows |
+| `Costmate-x.x.x-arm64.dmg` | macOS (Apple Silicon — covers most Macs since 2020) |
+
+> **Note:** If you need to support older Intel Macs, build with `--arch=universal` and upload the universal DMG instead.
 
 #### Code Signing
 
